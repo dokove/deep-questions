@@ -52,6 +52,23 @@ services:
       redis:
         condition: service_started
 
+  # 4. Servicio de Alto Rendimiento en PHP (php-ecosystem-mastery / FrankenPHP / Laravel)
+  php-service:
+    image: dunglas/frankenphp:latest
+    container_name: mastery-php-worker
+    working_dir: /app
+    environment:
+      - SERVER_NAME=:8080
+      - DATABASE_URL=postgresql://mastery_user:mastery_password@postgres:5432/mastery_db
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
   # 4. API Core en Node.js (nodejs-ecosystem-mastery / NestJS / Express)
   node-core-api:
     image: node:20-alpine

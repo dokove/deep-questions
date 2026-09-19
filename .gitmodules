@@ -4,6 +4,9 @@
 [submodule "python-ecosystem-mastery"]
 	path = python-ecosystem-mastery
 	url = https://github.com/zulquer/python-ecosystem-mastery.git
+[submodule "php-ecosystem-mastery"]
+	path = php-ecosystem-mastery
+	url = https://github.com/zulquer/php-ecosystem-mastery.git
 [submodule "backend-mastery"]
 	path = backend-mastery
 	url = https://github.com/zulquer/backend-mastery.git

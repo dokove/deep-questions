@@ -1,12 +1,12 @@
 # 🏛️ The Mastery Suite: Software Engineering & Architecture Hub
 
-> **Repositorio Maestro y Centro de Mando** para la consolidación de habilidades desde el código hasta la infraestructura y el liderazgo técnico: **Node.js, Python, Arquitectura Backend, Frontend Moderno, Cloud Platform, CI/CD Universal y Metodologías Ágiles**.
+> **Repositorio Maestro y Centro de Mando** para la consolidación de habilidades desde el código hasta la infraestructura y el liderazgo técnico: **Node.js, Python, PHP, Arquitectura Backend, Frontend Moderno, Cloud Platform, CI/CD Universal y Metodologías Ágiles**.
 
 Creado y mantenido por **[@zulquer](https://github.com/zulquer)**.
 
 ---
 
-## 🌐 Mapa de la Suite de Especialidades (7 Submódulos)
+## 🌐 Mapa de la Suite de Especialidades (8 Submódulos)
 
 ```mermaid
 graph TD
@@ -19,6 +19,7 @@ graph TD
     UI["⚛️ frontend-mastery<br/>(React 19, Angular v19, Next.js, Web Perf)"]:::client
     API["🟢 nodejs-ecosystem-mastery<br/>(V8, Libuv, Express, NestJS, TS)"]:::runtime
     PY["🐍 python-ecosystem-mastery<br/>(CPython, GIL, FastAPI, Django, PySpark)"]:::runtime
+    PHP["🐘 php-ecosystem-mastery<br/>(Zend Engine, OPcache, Laravel, FrankenPHP)"]:::runtime
     ARCH["🌐 backend-mastery<br/>(REST RFCs, SQL ACID, NoSQL CAP, Dist. Resilience)"]:::backend
     CLOUD["☁️ cloud-mastery<br/>(AWS, Azure, K8s HPA, Terraform, FinOps)"]:::infra
     CICD["🚀 cicd-mastery<br/>(Pipelines DAG/Matrix, GitOps ArgoCD, Canary)"]:::infra
@@ -26,22 +27,26 @@ graph TD
 
     UI -->|HTTP / Streaming RSC| API
     UI -->|SSE / WebSockets| PY
+    UI -->|REST / Inertia| PHP
     API -->|Consistencia & ACID| ARCH
     PY -->|Procesamiento & Data Lake| ARCH
+    PHP -->|Transacciones & Pools| ARCH
     API -->|Docker OCI Containers| CLOUD
     PY -->|Docker OCI Containers| CLOUD
+    PHP -->|FrankenPHP OCI Images| CLOUD
     CICD -->|Despliegues Automatizados| CLOUD
     LEAN -.->|Gobierna el Flujo de Entrega| CICD
 ```
 
 ---
 
-## 📦 Los 7 Repositorios Especializados de la Suite
+## 📦 Los 8 Repositorios Especializados de la Suite
 
 | Repositorio | Especialidad Técnica & Runtimes | Repositorio GitHub |
 |---|---|---|
 | **`nodejs-ecosystem-mastery`** | 🟢 **Node.js Core, V8, Libuv, Express, NestJS (100 Labs), Testing & TypeScript** | [github.com/zulquer/nodejs-ecosystem-mastery](https://github.com/zulquer/nodejs-ecosystem-mastery) |
 | **`python-ecosystem-mastery`** | 🐍 **CPython Internals, GIL, FastAPI ASGI, Django ORM, PySpark & Pytest** | [github.com/zulquer/python-ecosystem-mastery](https://github.com/zulquer/python-ecosystem-mastery) |
+| **`php-ecosystem-mastery`** | 🐘 **Zend Engine 4, Zvals COW, Laravel IoC, Symfony HttpKernel, FrankenPHP & Pest** | [github.com/zulquer/php-ecosystem-mastery](https://github.com/zulquer/php-ecosystem-mastery) |
 | **`backend-mastery`** | 🌐 **REST APIs RFC 9110, SQL (MVCC, SKIP LOCKED), NoSQL (CAP, Redlock) & Sistemas Distribuidos** | [github.com/zulquer/backend-mastery](https://github.com/zulquer/backend-mastery) |
 | **`frontend-mastery`** | ⚛️ **React 19 (Fiber Reconciler, Lanes), Angular (Signals, Zoneless), Next.js & Web Vitals** | [github.com/zulquer/frontend-mastery](https://github.com/zulquer/frontend-mastery) |
 | **`cloud-mastery`** | ☁️ **Cloud (AWS, Azure, DigitalOcean), Kubernetes HPA, Terraform Multi-AZ & FinOps** | [github.com/zulquer/cloud-mastery](https://github.com/zulquer/cloud-mastery) |
