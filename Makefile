@@ -4,8 +4,8 @@ help:
 	@echo "================================================================="
 	@echo " 🏛️ THE MASTERY SUITE: COMMAND CENTER"
 	@echo "================================================================="
-	@echo " make status    - Muestra el estado de Git en los 7 repositorios"
-	@echo " make test-all  - Ejecuta los laboratorios senior en los 7 repos"
+	@echo " make status    - Muestra el estado de Git en los 8 repositorios"
+	@echo " make test-all  - Ejecuta los laboratorios senior en los 8 repos"
 	@echo " make update    - Actualiza todos los submódulos desde GitHub"
 	@echo "================================================================="
 
