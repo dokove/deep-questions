@@ -84,16 +84,13 @@ Dependiendo del objetivo profesional o del rol que quieras demostrar en entrevis
 Desde la raíz del repositorio padre:
 
 ```bash
-# 1. Comprobar el estado de Git en los 7 submódulos:
+# 1. Comprobar el estado de Git en los 8 submódulos:
 make status
 
-# 2. Ejecutar la suite completa de laboratorios senior en paralelo:
+# 2. Ejecutar la suite completa de laboratorios senior:
 make test-all
 
-# 3. Levantar la arquitectura integrada Capstone con Docker:
-docker compose up -d
-
-# 4. Actualizar todos los submódulos a la última versión:
+# 3. Actualizar todos los submódulos desde sus repositorios remotos:
 make update
 ```
 
