@@ -1,11 +1,11 @@
 /**
  * THE MASTERY SUITE — COMPILED QUESTIONS DATABASE
  * Generated automatically by _scripts/build-questions-data.js
- * Generated at: 2026-09-30T07:44:09.381Z
+ * Generated at: 2026-09-30T07:45:12.565Z
  */
 window.INTERVIEW_DATA = {
   "version": "2.0.0",
-  "generatedAt": "2026-09-30T07:44:09.381Z",
+  "generatedAt": "2026-09-30T07:45:12.565Z",
   "totalModules": 11,
   "totalQuestions": 1100,
   "modules": [
