@@ -51,7 +51,7 @@ La suite incluye una aplicación web de alta gama para explorar, filtrar por niv
 # Lanzar el visualizador interactivo localmente:
 make viewer
 # O abrir directamente en cualquier navegador:
-open viewer/index.html
+open _viewer/index.html
 ```
 
 - 📂 **Organización por Sección**: Cada tecnología dividida en bloques canónicos de 10 preguntas.

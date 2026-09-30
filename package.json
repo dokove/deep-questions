@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build:questions": "node _scripts/build-questions-data.js",
-    "viewer": "open viewer/index.html",
+    "viewer": "open _viewer/index.html",
     "test:all": "make test-all",
     "status": "make status"
   },

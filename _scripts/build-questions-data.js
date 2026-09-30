@@ -7,8 +7,8 @@
  * procesa cada archivo de preguntas Markdown (INTERVIEW-QUESTIONS*.md),
  * extrae secciones, preguntas, niveles, respuestas técnicas, y banderas (Red/Green Flags),
  * y compila los datasets para el visualizador web en:
- *   - viewer/data/questions-data.json
- *   - viewer/data/questions-data.js (window.INTERVIEW_DATA)
+ *   - _viewer/data/questions-data.json
+ *   - _viewer/data/questions-data.js (window.INTERVIEW_DATA)
  */
 
 import fs from 'node:fs';
@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
-const VIEWER_DATA_DIR = path.join(ROOT_DIR, 'viewer', 'data');
+const VIEWER_DATA_DIR = path.join(ROOT_DIR, '_viewer', 'data');
 
 // Catálogo de metadatos predefinidos para módulos de la suite
 const MODULE_METADATA = {

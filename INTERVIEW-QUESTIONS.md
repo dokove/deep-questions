@@ -75,7 +75,7 @@ npm run build:questions
 # 2. Abrir el visualizador interactivo:
 make viewer
 # o abrir directamente:
-open viewer/index.html
+open _viewer/index.html
 ```
 
 - **Filtros por Nivel**: Explora preguntas para `Junior`, `Mid-Level`, `Senior` y `Staff / Lead`.

@@ -24,7 +24,7 @@ build-viewer:
 
 viewer: build-viewer
 	@echo "🌐 Abriendo el visualizador interactivo de preguntas..."
-	@open viewer/index.html || xdg-open viewer/index.html 2>/dev/null || echo "Abre viewer/index.html en tu navegador"
+	@open _viewer/index.html || xdg-open _viewer/index.html 2>/dev/null || echo "Abre _viewer/index.html en tu navegador"
 
 test-all:
 	@echo "\n🟢 [1/9] Ejecutando nodejs-ecosystem-mastery..."
