@@ -1,13 +1,13 @@
 /**
  * THE MASTERY SUITE — COMPILED QUESTIONS DATABASE
  * Generated automatically by _scripts/build-questions-data.js
- * Generated at: 2026-09-30T07:49:24.613Z
+ * Generated at: 2026-09-30T08:16:07.423Z
  */
 window.INTERVIEW_DATA = {
   "version": "2.0.0",
-  "generatedAt": "2026-09-30T07:49:24.613Z",
+  "generatedAt": "2026-09-30T08:16:07.423Z",
   "totalModules": 11,
-  "totalQuestions": 1100,
+  "totalQuestions": 1150,
   "modules": [
     {
       "id": "nodejs-core",
@@ -17,7 +17,7 @@ window.INTERVIEW_DATA = {
       "category": "Backend & Runtime",
       "description": "V8 internals, Libuv Event Loop, Memory Slabs 8KB, Backpressure, Worker Threads y Atomics.",
       "filePath": "nodejs-ecosystem-mastery/INTERVIEW-QUESTIONS-NODEJS.md",
-      "totalQuestions": 100,
+      "totalQuestions": 150,
       "sections": [
         {
           "id": "sec-1",
@@ -976,6 +976,486 @@ window.INTERVIEW_DATA = {
               "redFlag": "Colocar un bloque gigante `process.on('uncaughtException', (err) => { /* ignorar y seguir */ })` para evitar que el servidor se caiga.",
               "greenFlag": "Explica la filosofía Erlang/OTP (*Let it crash*) aplicada a la orquestación moderna en Kubernetes y The Twelve-Factor App.",
               "answer": "En el diseño de sistemas distribuidos, un proceso de Node.js que ha sufrido un error imprevisto (ej. `TypeError` no capturado o estado de memoria corrupto) **no debe intentar continuar ejecutándose**:\n- Si una Promesa no capturada corrompió una variable de sesión global o dejó una transacción SQL semiabierta, intentar continuar expone al sistema a fugas de datos y corrupción de base de datos.\n- **Principio Fail-Fast (Crash Early)**:\n1. Ante `uncaughtException` o `unhandledRejection`, se registra el error con stack trace completo.\n2. Se cierra el servidor HTTP para no recibir más tráfico.\n3. El proceso se autodestruye inmediatamente con `process.exit(1)`.\n4. El orquestador de nivel superior (**Kubernetes Kubelet** o **systemd**) detecta el código de salida no cero y levanta un nuevo Pod/proceso con memoria limpia en milisegundos.\nLa resiliencia no se logra evitando que un proceso muera, sino diseñando la arquitectura para que cualquier nodo pueda morir en cualquier microsegundo sin pérdida de servicio (*Disposable Processes* de The Twelve-Factor App)."
+            }
+          ]
+        },
+        {
+          "id": "sec-11",
+          "title": "11. Fundamentos de Node.js, Globales y Ciclo de Vida del Proceso",
+          "questions": [
+            {
+              "id": "nodejs-core-q101",
+              "number": 101,
+              "title": "¿Qué es exactamente Node.js y por qué no debe confundirse con un framework o lenguaje de programación?",
+              "seniority": "Junior",
+              "redFlag": "Responder que \"Node.js es un framework backend de JavaScript\" o \"un nuevo lenguaje compilado derivado de JS\".",
+              "greenFlag": "Destacar la combinación del motor V8 (compilación JIT y ejecución de JS) y la biblioteca Libuv (abstracción del Event Loop e I/O no bloqueante multiplataforma).",
+              "answer": "Node.js es un **entorno de ejecución (runtime environment) para JavaScript multiplataforma y de código abierto**, construido sobre el motor V8 de Google Chrome y la biblioteca multiplataforma Libuv:\n- **No es un lenguaje**: El lenguaje subyacente es JavaScript (ECMAScript). Node.js no define la sintaxis del lenguaje, sino las APIs de sistema disponibles.\n- **No es un framework**: No impone una arquitectura fija como NestJS, Express o Django. Es la infraestructura base sobre la cual se ejecutan frameworks y herramientas.\n- **Capacidades nativas**: Permite a JavaScript acceder al sistema operativo subyacente: leer y escribir en el sistema de archivos (`node:fs`), abrir sockets de red TCP/UDP (`node:net`), ejecutar procesos hijos (`node:child_process`) y manejar hilos de trabajo (`node:worker_threads`), capacidades vedadas en un navegador por motivos de seguridad sandbox."
+            },
+            {
+              "id": "nodejs-core-q102",
+              "number": 102,
+              "title": "¿En qué se diferencia el entorno de ejecución de Node.js del entorno de un navegador web?",
+              "seniority": "Junior",
+              "redFlag": "Intentar resolver una tarea en Node.js usando `window.localStorage` o creer que `fetch` siempre estuvo presente sin requerir Node 18+.",
+              "greenFlag": "Mencionar el sandbox de seguridad del navegador vs la naturaleza de servidor de Node.js, señalando la convergencia moderna de APIs web estándar (Web Streams, `fetch`, `crypto`, `AbortController`).",
+              "answer": "Aunque ambos ejecutan JavaScript utilizando motores modernos (V8 en Node.js y Chrome, SpiderMonkey en Firefox, JavaScriptCore en Safari), difieren sustancialmente en sus APIs de entorno (*Host Environment*):\n1. **Acceso al DOM y BOM**:\n - *Navegador*: Posee los objetos globales `window`, `document`, `navigator`, eventos de usuario (clicks, teclado) y manipulación de CSS/HTML.\n - *Node.js*: No existe el DOM ni `window`. Tratar de acceder a `document` arroja un `ReferenceError`.\n2. **Acceso al Sistema Operativo y Red**:\n - *Navegador*: Se ejecuta en un sandbox estricto por seguridad; no puede leer libremente el disco duro del usuario ni abrir puertos TCP arbitrarios.\n - *Node.js*: Acceso total al sistema operativo, memoria nativa, variables de entorno (`process.env`), red de bajo nivel y almacenamiento.\n3. **Sistema de Módulos Histórico**:\n - *Navegador*: Diseñado originalmente para scripts en etiquetas `<script>`, luego evolucionó a ES Modules (`<script type=\"module\">`).\n - *Node.js*: Nació con el sistema modular sincrónico CommonJS (`require` / `module.exports`) y ahora soporta ES Modules nativos de forma dual."
+            },
+            {
+              "id": "nodejs-core-q103",
+              "number": 103,
+              "title": "¿Qué es `globalThis` y qué objetos globales existen en Node.js que no existen en el navegador (y viceversa)?",
+              "seniority": "Junior",
+              "redFlag": "Asignar propiedades a `global` de manera indiscriminada para compartir estado entre módulos en lugar de usar inyección de dependencias o exports.",
+              "greenFlag": "Explicar que en CommonJS las variables `__dirname`, `__filename`, `exports`, `module` y `require` no son globales de `globalThis`, sino parámetros inyectados en la función envoltorio del módulo.",
+              "answer": "Historicamente, acceder al objeto de ámbito global dependía del entorno:\n- En navegadores: `window` (o `self` en Web Workers).\n- En Node.js: `global`.\nPara estandarizar el lenguaje en ECMAScript 2020 se introdujo **`globalThis`**, que siempre apunta al objeto global independientemente del runtime.\n- **Globales nativos de Node.js**:\n- `process`: Proporciona información y control sobre el proceso de ejecución actual.\n- `Buffer`: Manejo de datos binarios en memoria cruda fuera del heap de V8.\n- `setImmediate()` / `clearImmediate()`: Planifica la ejecución de un callback en la fase de Check de Libuv.\n- **Globales inexistentes en Node.js tradicional**:\n- `window`, `document`, `HTMLElement`, `alert()`, `localStorage` (Nota: `localStorage` experimental se incorporó recientemente en Node 22 bajo flag)."
+            },
+            {
+              "id": "nodejs-core-q104",
+              "number": 104,
+              "title": "¿Cómo funciona el objeto `process` y para qué se utilizan `process.env`, `process.argv` y `process.pid`?",
+              "seniority": "Junior",
+              "redFlag": "Creer que `process.argv[0]` contiene el primer argumento de negocio introducido por el usuario.",
+              "greenFlag": "Advertir que mutar `process.env` en runtime no propaga los cambios hacia el proceso padre que lanzó Node.js en el sistema operativo.",
+              "answer": "El objeto global `process` es una instancia de `EventEmitter` que representa la instancia del proceso del sistema operativo en el que corre la aplicación:\n- **`process.env`**: Objeto que contiene las variables de entorno del sistema (claves y valores siempre son strings). Esencial para configuraciones (`PORT`, `NODE_ENV`, secretos).\n- **`process.argv`**: Array que contiene los argumentos pasados por línea de comandos:\n- `process.argv[0]`: Ruta absoluta al binario ejecutable de `node`.\n- `process.argv[1]`: Ruta absoluta al archivo de script que se está ejecutando.\n- `process.argv[2...n]`: Parámetros adicionales introducidos por el usuario (ej. `--port=3000`).\n- **`process.pid`**: Número de identificación del proceso (`PID`) asignado por el kernel del sistema operativo. Crucial para monitoreo, señales de kill y arquitecturas cluster."
+            },
+            {
+              "id": "nodejs-core-q105",
+              "number": 105,
+              "title": "¿Cuál es la diferencia entre `process.exit(0)` y `process.exit(1)` y qué ocurre si se llama a `process.exit()` con I/O pendiente?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Usar `process.exit(0)` en medio de una petición HTTP para \"detener\" la función, cortando de raíz todas las demás peticiones concurrentes de otros usuarios.",
+              "greenFlag": "Argumentar que `process.exitCode` es la forma limpia de definir el código de salida sin interrumpir operaciones asíncronas en vuelo.",
+              "answer": "`process.exit([code])` fuerza la finalización inmediata del proceso de Node.js:\n- **Código `0` (Éxito)**: Indica al sistema operativo, orquestador (Docker, Kubernetes) o script CI/CD que el programa concluyó su tarea satisfactoriamente.\n- **Código no-cero (`1`, `2`, etc. - Error)**: Indica un fallo imprevisto o error irrecuperable. Herramientas de orquestación o terminales (como `echo $?`) detectan este código para reiniciar el contenedor o alertar fallo en pipelines.\n- **Impacto sobre I/O pendiente**:\n- `process.exit()` es **abrupto y destructor**: no espera a que se vacíe el Event Loop, ni a que se completen escrituras de red o de archivos en disco, ni a que se vacíe el buffer de `process.stdout`.\n- **Mejor práctica**: En lugar de llamar directamente a `process.exit()`, establecer `process.exitCode = 1;` y permitir que el Event Loop se vacíe de forma natural (*graceful termination*), o implementar un protocolo de cierre controlado."
+            },
+            {
+              "id": "nodejs-core-q106",
+              "number": 106,
+              "title": "¿Cómo se ejecutan scripts en Node.js y qué utilidad tiene el modo REPL (`node`)?",
+              "seniority": "Junior",
+              "redFlag": "Desconocer que existe el REPL o no saber cómo forzar la salida (`.exit` o Ctrl+C dos veces).",
+              "greenFlag": "Mencionar el uso de la variable `_` para reutilizar el valor previo en una sesión interactiva del REPL.",
+              "answer": "- **Ejecución de archivos**: Se invoca con `node ruta/al/archivo.js`. Node.js carga el archivo, lo envuelve en una función modular, compila el bytecode con V8 y ejecuta el código en el Event Loop hasta que no queden listeners o timers activos.\n- **Modo REPL (Read-Eval-Print Loop)**:\n- Se inicia ejecutando simplemente `node` en la terminal sin argumentos.\n- Permite evaluar código JavaScript interactivamente en tiempo real: lee la entrada (`Read`), evalúa la expresión (`Eval`), imprime el resultado con formato de colores (`Print`) y espera la siguiente instrucción (`Loop`).\n- Es extremadamente útil para prototipado rápido, probar expresiones regulares, verificar salidas de módulos nativos (`crypto`, `os`, `path`) o explorar métodos disponibles en un objeto.\n- Dispone de comandos especiales con punto, como `.exit`, `.clear`, `.help` y la variable especial `_` que almacena el resultado de la última expresión evaluada."
+            },
+            {
+              "id": "nodejs-core-q107",
+              "number": 107,
+              "title": "¿Qué es el archivo `.env`, cómo se cargaba con `dotenv` y qué flag nativo introdujo Node.js 20+ (`--env-file`)?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Subir el archivo `.env` con contraseñas de producción al repositorio de Git por no incluirlo en `.gitignore`.",
+              "greenFlag": "Demostrar conocimiento del flag nativo `--env-file` en Node 20+, reduciendo la superficie de ataque y el peso de `node_modules`.",
+              "answer": "El archivo `.env` es un fichero de texto plano con formato `CLAVE=valor` utilizado para gestionar configuraciones dependientes del entorno (credenciales de base de datos, API keys, URLs de servicios) según los principios de *The Twelve-Factor App*:\n- **Enfoque tradicional**:\n- Requería instalar la dependencia externa `dotenv` (`npm i dotenv`).\n- Se ejecutaba al inicio del código: `import 'dotenv/config'` o `require('dotenv').config()`.\n- **Soporte nativo en Node.js (desde Node v20.6.0+)**:\n- Node.js incorporó el flag de CLI **`--env-file=.env`**:\n  ```bash\n  node --env-file=.env app.js\n  ```\n- Elimina completamente la necesidad de instalar dependencias de terceros para inyectar variables de entorno en `process.env`.\n- Permite cargar múltiples archivos en orden de prioridad: `node --env-file=.env.common --env-file=.env.local app.js`."
+            },
+            {
+              "id": "nodejs-core-q108",
+              "number": 108,
+              "title": "¿Qué es el Garbage Collector a nivel conceptual para un desarrollador Junior y cómo evitar memory leaks básicos?",
+              "seniority": "Junior",
+              "redFlag": "Creer que al terminar una función JavaScript limpia automáticamente todo de inmediato o no saber qué es un Memory Leak.",
+              "greenFlag": "Explicar la diferencia entre memoria alcanzable vs inalcanzable y sugerir el uso de `WeakMap` / `WeakRef` para referencias que no deben impedir la recolección de basura.",
+              "answer": "En Node.js, la gestión de memoria es automática gracias al Garbage Collector (GC) integrado en el motor V8:\n- **Concepto clave (Alcanzabilidad / Reachability)**: El GC rastrea las referencias desde la raíz (*Roots*: variables globales, pila de ejecución actual, contexto activo). Cualquier objeto en memoria al que ya no se pueda acceder directa ni indirectamente es considerado \"basura\" y su espacio es reclamado.\n- **Fugas de memoria básicas y cómo evitarlas**:\n1. **Variables globales no deseadas**: Escribir `miData = []` sin `const`, `let` o `var` ancla el array a `globalThis`, impidiendo que el GC lo libere jamás.\n2. **Event Listeners desatendidos**: Registrar listeners con `emitter.on('evento', callback)` en objetos de larga vida (como un socket o servidor) sin llamar a `emitter.off()` cuando la sesión del usuario finaliza.\n3. **Closures que retienen variables pesadas**: Una función que mantiene referencia a un objeto masivo que ya no se necesita dentro de su ámbito léxico.\n4. **Cachés en memoria sin límite de tamaño**: Almacenar objetos en un objeto plano `const cache = {}` o `new Map()` sin política de expiración (TTL o LRU), provocando que la memoria crezca indefinidamente hasta que el proceso muere con `JavaScript heap out of memory`."
+            },
+            {
+              "id": "nodejs-core-q109",
+              "number": 109,
+              "title": "¿Por qué se dice que Node.js es \"monohilo\" (single-threaded) si en realidad el sistema operativo ejecuta múltiples hilos por debajo?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Afirmar que Node.js solo tiene un hilo a nivel del sistema operativo en total.",
+              "greenFlag": "Diferenciar con claridad entre el hilo único donde corre el código JS del desarrollador y los hilos en C++ que Libuv y el kernel utilizan en segundo plano.",
+              "answer": "- **La perspectiva del código JavaScript**:\n- Decimos que Node.js es monohilo porque la ejecución de nuestro código JavaScript, la pila de llamadas (*Call Stack*) y el ciclo del Event Loop corren en **un único hilo principal (Main Thread)**. Dos funciones de JavaScript nunca se ejecutan en paralelo en el mismo contexto.\n- **La realidad subyacente del sistema**:\n- Node.js delega tareas pesadas o bloqueantes a la biblioteca **Libuv**, la cual gestiona internamente un **ThreadPool de hilos de C++ nativos** (por defecto 4 hilos, configurable con `UV_THREADPOOL_SIZE`).\n- Operaciones como cifrado (`crypto.pbkdf2`), compresión (`zlib`), llamadas al sistema de archivos (`fs.readFile`) y resolución DNS (`dns.lookup`) se ejecutan en estos hilos de fondo de C++.\n- Las operaciones de red (sockets HTTP, TCP) son delegadas directamente a los mecanismos asíncronos y no bloqueantes del kernel del sistema operativo (`epoll` en Linux, `kqueue` en macOS, `IOCP` en Windows) sin consumir hilos del ThreadPool."
+            },
+            {
+              "id": "nodejs-core-q110",
+              "number": 110,
+              "title": "¿Qué diferencia hay entre operaciones bloqueantes (síncronas) y no bloqueantes (asíncronas) y por qué nunca debe bloquearse el Event Loop?",
+              "seniority": "Junior",
+              "redFlag": "Usar métodos síncronos como `fs.readFileSync` o `crypto.pbkdf2Sync` dentro de los manejadores de rutas de un servidor web en producción.",
+              "greenFlag": "Citar la regla de oro: *\"Never block the Event Loop\"* y reservar los métodos síncronos únicamente para scripts de arranque inicial previa apertura del puerto HTTP.",
+              "answer": "- **Operación Bloqueante (`*Sync`)**:\n- Ejemplo: `const data = fs.readFileSync('archivo.pdf');` o un bucle `while (true) {}`.\n- La ejecución del hilo principal de JavaScript se detiene completamente esperando que el disco termine de leer.\n- Mientras tanto, el Event Loop no puede procesar timers, ni responder a peticiones HTTP entrantes, ni ejecutar callbacks. Para todos los demás clientes conectados, el servidor parece \"congelado\" o caído.\n- **Operación No Bloqueante (Asíncrona)**:\n- Ejemplo: `fs.readFile('archivo.pdf', (err, data) => { ... });` o `await fs.promises.readFile(...)`.\n- Node.js delega la lectura a Libuv y retorna inmediatamente el control al hilo principal.\n- El hilo principal continúa atendiendo cientos de peticiones de otros usuarios mientras el disco lee los bytes en segundo plano.\n- Cuando la lectura finaliza, Libuv coloca el callback en la cola de eventos para que se ejecute cuando el Call Stack esté libre."
+            }
+          ]
+        },
+        {
+          "id": "sec-12",
+          "title": "12. Sistema de Módulos (CJS vs ESM), Rutas y Gestión de Paquetes",
+          "questions": [
+            {
+              "id": "nodejs-core-q111",
+              "number": 111,
+              "title": "¿Cuál es la diferencia fundamental entre CommonJS (`require` / `module.exports`) y ECMAScript Modules (`import` / `export`)?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Confundir la sintaxis de CommonJS y ES Modules, o creer que `require()` permite Tree-Shaking automático.",
+              "greenFlag": "Explicar la fase de enlace estático de ESM y el concepto de *Live Bindings* frente a la exportación de copias/objetos en CJS.",
+              "answer": "1. **Naturaleza del Sistema**:\n - **CommonJS (CJS)**: Sistema dinámico y síncrono creado específicamente para Node.js en 2009. Carga los módulos en tiempo de ejecución.\n - **ECMAScript Modules (ESM)**: Estándar oficial de JavaScript definido por TC39 para ejecutarse tanto en navegadores como en servidores.\n2. **Tiempo de Análisis (Parse Time vs Runtime)**:\n - `require()` es una llamada a función normal: se puede invocar condicionalmente dentro de un `if` o bucle (`if (cond) require('./a')`).\n - `import` estático se analiza y resuelve en una fase previa a la ejecución del código (*Static Module Record*), lo que permite a los bundlers (Vite, Rollup, Webpack) realizar **Tree-Shaking** (eliminación de código muerto).\n3. **Paso por Valor vs Enlaces Vivos (Live Bindings)**:\n - En CJS, `module.exports` copia/evalúa el valor al momento de exportar.\n - En ESM, los exports son referencias en tiempo real (*Live Bindings*): si el módulo exportador cambia internamente una variable exportada, el módulo consumidor ve el nuevo valor inmediatamente.\n4. **Modo Estricto**:\n - ESM se ejecuta automáticamente en modo estricto (`\"use strict\"`) por especificación; CJS requiere declararlo manualmente."
+            },
+            {
+              "id": "nodejs-core-q112",
+              "number": 112,
+              "title": "¿Por qué `require()` es síncrono y bloqueante mientras que `import` permite carga estática y asíncrona?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Creer que `require()` retorna una Promesa o que puede utilizar `await require(...)`.",
+              "greenFlag": "Describir las 3 fases del ciclo de vida de ESM (Construcción, Instanciación y Evaluación).",
+              "answer": "- **Mecanismo de `require(id)`**:\n1. Resuelve la ruta absoluta del archivo en el disco.\n2. Comprueba la caché (`require.cache`). Si existe, retorna inmediatamente.\n3. Si no existe, lee el archivo de disco de manera **completamente síncrona** (`fs.readFileSync` nativo).\n4. Envuelve el código en una función anónima: `(function (exports, require, module, __filename, __dirname) { ... })`.\n5. Ejecuta el código y almacena el resultado en `module.exports`.\n6. Al ser síncrono, detiene el hilo hasta que el archivo se parsea por completo.\n- **Mecanismo de `import` (ESM)**:\n- Sigue el ciclo de vida de tres fases de la especificación ECMAScript:\n  1. **Construcción (Parsing)**: Descarga/localiza los archivos y analiza los módulos para construir el grafo de dependencias de forma asíncrona.\n  2. **Instanciación**: Reserva espacio en memoria para los exports e imports y establece los enlaces de memoria (*Live Bindings*), sin ejecutar código todavía.\n  3. **Evaluación**: Ejecuta el código de los módulos en orden topológico (de abajo hacia arriba en el grafo). Además, con la función dinámica `import('modulo.js')`, se devuelve una Promesa que permite cargar módulos bajo demanda sin bloquear el hilo."
+            },
+            {
+              "id": "nodejs-core-q113",
+              "number": 113,
+              "title": "¿Qué significan y para qué sirven `__dirname` y `__filename` en CommonJS y cómo se replican en ES Modules usando `import.meta.url`?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Intentar usar `__dirname` en un archivo ESM tras declarar `\"type\": \"module\"` y no entender por qué el runtime arroja error.",
+              "greenFlag": "Demostrar el uso de `fileURLToPath(import.meta.url)` y señalar la incorporación de `import.meta.dirname` en versiones recientes de Node.js.",
+              "answer": "- **En CommonJS**:\n- `__filename`: Cadena con la ruta absoluta del archivo de código actual en el sistema de archivos (ej. `/app/src/index.js`).\n- `__dirname`: Cadena con la ruta absoluta del directorio que contiene el archivo actual (ej. `/app/src`).\n- *Nota*: No son variables globales reales; son argumentos inyectados por la función envoltorio del módulo CommonJS.\n- **En ES Modules (ESM)**:\n- Ni `__dirname` ni `__filename` existen en ESM (arrojando `ReferenceError` si se usan).\n- Se replican mediante el objeto estándar **`import.meta.url`** (que contiene la URL con esquema `file://` del módulo actual) y las utilidades nativas de `node:url` y `node:path`:\n  ```javascript\n  import { fileURLToPath } from 'node:url';\n  import path from 'node:path';\n   const __filename = fileURLToPath(import.meta.url);\n  const __dirname = path.dirname(__filename);\n  ```\n- *(En Node.js v20.11.0+ e import.meta)*: Se añadió la utilidad nativa `import.meta.dirname` e `import.meta.filename` que simplifica este proceso."
+            },
+            {
+              "id": "nodejs-core-q114",
+              "number": 114,
+              "title": "¿Cuál es la diferencia entre `path.join()` y `path.resolve()` en el módulo nativo `node:path`?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Concatenar rutas con strings manuales (`dir + '/' + file`), lo que rompe la aplicación al desplegar en sistemas operativos con otros separadores (Windows vs POSIX).",
+              "greenFlag": "Saber que `path.resolve()` siempre garantiza una ruta absoluta anclada al `cwd` si no encuentra otra raíz.",
+              "answer": "Ambas funciones provienen de `node:path` y gestionan los separadores de ruta (`/` en Linux/macOS y `\\` en Windows), pero tienen una semántica diferente:\n- **`path.join([...paths])`**:\n- Simplemente concatena todos los segmentos pasados utilizando el separador específico de la plataforma y normaliza la ruta resultante (resolviendo `..` y `.`).\n- Si no se especifica una raíz absoluta, devuelve una **ruta relativa**:\n  ```javascript\n  path.join('usuarios', 'fotos', 'avatar.png'); \n  // Retorna: 'usuarios/fotos/avatar.png'\n  ```\n- **`path.resolve([...paths])`**:\n- Procesa la secuencia de rutas de derecha a izquierda hasta construir una **ruta absoluta**.\n- Si ninguno de los segmentos es absoluto, le prepende el directorio de trabajo actual (`process.cwd()`).\n- Funciona exactamente como una secuencia de comandos `cd` en la terminal:\n  ```javascript\n  path.resolve('usuarios', 'fotos', 'avatar.png'); \n  // Retorna: '/Users/marcogil/mi-proyecto/usuarios/fotos/avatar.png'\n  path.resolve('/var/www', 'imagenes', '/etc'); \n  // Retorna: '/etc' (porque '/etc' es absoluto y anula lo previo)\n  ```"
+            },
+            {
+              "id": "nodejs-core-q115",
+              "number": 115,
+              "title": "¿Qué propósito tienen `package.json` y `package-lock.json` y por qué nunca debe ignorarse este último en Git?",
+              "seniority": "Junior",
+              "redFlag": "Colocar `package-lock.json` dentro del `.gitignore` o asumir que `package.json` garantiza builds idénticos por sí solo.",
+              "greenFlag": "Explicar el concepto de reproducibilidad determinista de builds e integridad de paquetes mediante hashes criptográficos.",
+              "answer": "- **`package.json`**:\n- Es el manifiesto del proyecto: define metadatos (nombre, versión, licencia), scripts de ejecución (`scripts`), tipo de módulo (`type`) y los rangos de dependencias permitidos utilizando sintaxis SemVer (ej. `\"express\": \"^4.19.0\"`).\n- **`package-lock.json`**:\n- Es el registro exacto, determinista y congelado del árbol de dependencias instalado:\n  1. Especifica la **versión exacta y única** de cada paquete principal y de todas sus dependencias transitivas (subdependencias).\n  2. Almacena la URL de descarga y el hash criptográfico de integridad (`integrity: sha512-...`) de cada paquete descargado del registro de npm.\n- **Por qué NUNCA debe ignorarse en Git**:\n- Si se ignora `package-lock.json`, dos desarrolladores o el servidor de CI/CD que ejecuten `npm install` en días distintos podrían instalar versiones secundarias diferentes debido al comodín `^`. Un parche con un bug introducido en una subdependencia podría romper producción aunque el código de la aplicación no haya cambiado (*\"en mi máquina funciona\"*)."
+            },
+            {
+              "id": "nodejs-core-q116",
+              "number": 116,
+              "title": "¿Qué diferencia existe entre `dependencies`, `devDependencies` y `peerDependencies` en un proyecto de Node.js?",
+              "seniority": "Junior",
+              "redFlag": "Instalar librerías como `nodemon` o `typescript` en `dependencies`, inflando innecesariamente el contenedor de producción.",
+              "greenFlag": "Conocer el flag `--omit=dev` para optimizar pipelines de CI/CD y despliegues en contenedores Docker.",
+              "answer": "- **`dependencies`**:\n- Librerías esenciales para que la aplicación funcione en **tiempo de ejecución en producción** (ej. `express`, `pg`, `jsonwebtoken`). Se instalan siempre.\n- **`devDependencies`**:\n- Herramientas requeridas exclusivamente para el **desarrollo local, testing, linters y compilación** (ej. `jest`, `typescript`, `eslint`, `nodemon`). Al construir una imagen Docker de producción con `npm install --omit=dev` o `NODE_ENV=production`, estas dependencias se omiten para reducir drásticamente el peso y la superficie de vulnerabilidades de la imagen.\n- **`peerDependencies`**:\n- Utilizadas comúnmente en la publicación de **librerías y plugins**. Declaran que el paquete espera que el proyecto anfitrión (*host*) tenga instalada una versión específica de una librería compartida (ej. un plugin de React exige que el host tenga `\"react\": \">=18\"` para no duplicar la instancia de React en memoria)."
+            },
+            {
+              "id": "nodejs-core-q117",
+              "number": 117,
+              "title": "¿Cómo funciona el versionado semántico (SemVer) en `package.json` y qué significan los prefijos `^` (carey) y `~` (tilde)?",
+              "seniority": "Junior",
+              "redFlag": "Pensar que el carey (`^`) permite saltos de versión principal (*Major*) con breaking changes.",
+              "greenFlag": "Advertir que para versiones previas a 1.0.0 (`0.y.z`), `^0.2.3` solo actualiza parches (`< 0.3.0`) porque la especificación SemVer considera inestable el software en `0.x`.",
+              "answer": "El versionado semántico sigue la convención **`MAJOR.MINOR.PATCH`** (ej. `2.4.1`).\n- **MAJOR (2)**: Cambios incompatibles con versiones anteriores (*Breaking Changes* de la API).\n- **MINOR (4)**: Nueva funcionalidad añadida manteniendo 100% de retrocompatibilidad.\n- **PATCH (1)**: Corrección de errores y bugs menores manteniendo retrocompatibilidad.\n- **Significado de los prefijos**:\n- **`^` (Carey - Caret)**: Permite actualizaciones que no modifiquen el dígito no-cero más a la izquierda.\n  - Para `^1.2.3`: Permite desde `1.2.3` hasta `< 2.0.0` (actualiza MINOR y PATCH). Es el comportamiento por defecto de `npm install`.\n- **`~` (Tilde)**: Solo permite actualizaciones del nivel PATCH:\n  - Para `~1.2.3`: Permite desde `1.2.3` hasta `< 1.3.0` (solo corrección de bugs).\n- **Sin prefijo (Exacta)**: `\"1.2.3\"` solo instala exactamente esa versión."
+            },
+            {
+              "id": "nodejs-core-q118",
+              "number": 118,
+              "title": "¿Cuál es la diferencia entre ejecutar `npm install` y `npm ci` en entornos de integración continua (CI/CD)?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Usar `npm install` en scripts de despliegue en producción o pipelines de CI/CD.",
+              "greenFlag": "Justificar el uso de `npm ci` en pipelines de CI/CD basándose en determinismo estricto, inmutabilidad del lockfile y velocidad de instalación.",
+              "answer": "- **`npm install`**:\n- Diseñado para el flujo de trabajo del desarrollador.\n- Si `package.json` y `package-lock.json` difieren (ej. alguien añadió una dependencia manualmente a `package.json`), `npm install` actualiza `package-lock.json` con nuevas versiones que cumplan los rangos SemVer.\n- Reescribe archivos de forma interactiva en `node_modules`.\n- **`npm ci` (`Continuous Integration`)**:\n- Diseñado específicamente para pipelines de CI/CD y entornos de producción automatizados.\n- **Estricto con el lockfile**: Requiere la existencia obligatoria de `package-lock.json`. Si encuentra la más mínima discrepancia entre `package.json` y `package-lock.json`, arroja un error y aborta inmediatamente sin modificar ningún archivo.\n- **Instalación limpia**: Elimina por completo la carpeta `node_modules` existente antes de comenzar a descargar.\n- **Mayor velocidad**: Es sustancialmente más rápido porque no pierde tiempo resolviendo dependencias ni calculando compatibilidad SemVer; simplemente descarga los paquetes exactos descritos en el lockfile."
+            },
+            {
+              "id": "nodejs-core-q119",
+              "number": 119,
+              "title": "¿Qué son los scripts de npm (`npm run <script>`), cómo funcionan los hooks `pre` y `post`, y qué hace `npx`?",
+              "seniority": "Junior",
+              "redFlag": "Instalar herramientas de compilación con `npm install -g` en las máquinas de todos los desarrolladores en vez de instalarlas localmente y ejecutarlas con `npx` o scripts de npm.",
+              "greenFlag": "Utilizar hooks `pretest` / `prebuild` para pipelines automatizados de linting y formateo.",
+              "answer": "- **Scripts de npm**:\n- Sección en `package.json` que define comandos personalizados: `\"scripts\": { \"build\": \"tsc\", \"start\": \"node dist/index.js\" }`.\n- Los scripts ejecutan comandos en una subshell donde `node_modules/.bin` se agrega automáticamente al `PATH`, permitiendo invocar CLI locales sin instalarlos globalmente.\n- Comandos como `test`, `start`, `stop` y `restart` se pueden invocar directamente (`npm test`, `npm start`), mientras que los demás requieren `npm run <nombre>`.\n- **Hooks `pre` y `post`**:\n- npm ejecuta automáticamente scripts con prefijos coincidentes.\n- Si se define `prebuild` y `postbuild`, al ejecutar `npm run build`:\n  1. Se ejecuta automáticamente `npm run prebuild` (ej. limpieza de carpetas o linters).\n  2. Se ejecuta `npm run build`.\n  3. Se ejecuta automáticamente `npm run postbuild` (ej. notificaciones o compresión).\n- **`npx` (Node Package Execute)**:\n- Binario incluido con npm que permite ejecutar ejecutables CLI locales de `node_modules/.bin` o descargar y ejecutar un paquete de npm de forma efímera sin instalarlo global ni localmente (ej. `npx prisma migrate dev`, `npx create-vite`)."
+            },
+            {
+              "id": "nodejs-core-q120",
+              "number": 120,
+              "title": "¿Cómo funciona el flag `\"type\": \"module\"` en `package.json` y qué significan las extensiones `.cjs`, `.mjs` y `.js`?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Asumir que la extensión `.js` siempre significa CommonJS o no saber cómo habilitar la sintaxis `import` nativa en Node.js.",
+              "greenFlag": "Comprender cómo Node.js resuelve el tipo de módulo buscando el `package.json` ascendente más cercano y cómo forzar compatibilidad con `.cjs`.",
+              "answer": "Node.js utiliza la propiedad `\"type\"` en `package.json` y las extensiones de archivo para determinar si debe parsear un archivo como CommonJS o como ES Module:\n- **Comportamiento según `\"type\"`**:\n- Si `\"type\": \"commonjs\"` (o no está definido): todos los archivos `.js` se interpretan como **CommonJS**.\n- Si `\"type\": \"module\"`: todos los archivos `.js` dentro del paquete se interpretan como **ECMAScript Modules (ESM)**.\n- **Las extensiones explícitas**:\n- **`.mjs`**: Siempre se interpreta como **ES Module**, sin importar lo que defina el `package.json`.\n- **`.cjs`**: Siempre se interpreta como **CommonJS**, sin importar lo que defina el `package.json`.\n- **`.js`**: Adopta el formato definido por el `package.json` más cercano en el árbol de directorios.\n- **Impacto práctico**: Permite a librerías híbridas tener archivos `.cjs` para consumidores heredados y archivos `.mjs` / `.js` para aplicaciones modernas que utilizan ESM nativo."
+            }
+          ]
+        },
+        {
+          "id": "sec-13",
+          "title": "13. Asincronía Práctica: Callbacks, Promesas y Async/Await",
+          "questions": [
+            {
+              "id": "nodejs-core-q121",
+              "number": 121,
+              "title": "¿Qué es el \"Callback Hell\" (o Pyramid of Doom) y qué problemas genera en la legibilidad y mantenimiento del código?",
+              "seniority": "Junior",
+              "redFlag": "Escribir código anidado de 5 niveles en 2026 sin conocer cómo refactorizarlo con Promesas o `async/await`.",
+              "greenFlag": "Mostrar cómo transformar un flujo anidado en una función async lineal manejada con un único bloque `try/catch`.",
+              "answer": "El \"Callback Hell\" ocurre cuando múltiples operaciones asíncronas dependientes se anidan unas dentro de otras sucesivamente utilizando callbacks tradicionales:\n```javascript\nfs.readFile('usuario.json', (err, data) => {\nif (err) return handleError(err);\ndb.query('SELECT * FROM permisos WHERE user = ?', data.id, (err, permisos) => {\n  if (err) return handleError(err);\n  http.get(`http://api.servicio.com/${permisos.token}`, (err, res) => {\n    if (err) return handleError(err);\n    // La indentación se desplaza en diagonal hacia la derecha (pirámide)\n  });\n});\n});\n```\n- **Problemas fundamentales**:\n1. **Ilegibilidad extrema**: El flujo de lectura natural del código se pierde; la lógica de negocio se fragmenta.\n2. **Manejo de errores redundante y propenso a fallos**: Es necesario comprobar `if (err)` manualmente en cada nivel de anidación. Olvidar uno puede dejar peticiones colgadas o provocar excepciones no capturadas.\n3. **Dificultad para componer**: Ejecutar tareas en paralelo, encadenar operaciones dinámicas o reintentar operaciones se vuelve extraordinariamente complejo.\n- **Solución moderna**: Uso de Promesas y la sintaxis `async/await`, que permite expresar flujos asíncronos secuenciales planos con bloques `try/catch` estándar."
+            },
+            {
+              "id": "nodejs-core-q122",
+              "number": 122,
+              "title": "¿Qué es el patrón \"Error-First Callback\" (o Node-style callback) y por qué el primer parámetro siempre es `err`?",
+              "seniority": "Junior",
+              "redFlag": "Intentar acceder a `data` sin verificar previamente `if (err)`, provocando caídas por `TypeError: Cannot read properties of undefined`.",
+              "greenFlag": "Explicar la imposibilidad de que un `try/catch` externo capture excepciones que ocurren en callbacks diferidos por el Event Loop.",
+              "answer": "El patrón **Error-First Callback** es la convención canónica de diseño establecida por la comunidad de Node.js en sus APIs asíncronas originales (`node:fs`, `node:child_process`, etc.):\n- **Firma estándar**:\n```javascript\nfunction callback(err, result) { ... }\n```\n- **Reglas del patrón**:\n1. **El primer argumento se reserva para el error**: Si la operación falla, `err` contendrá una instancia de `Error` y los argumentos sucesivos serán `undefined` o nulos.\n2. **Si la operación triunfa**: `err` debe ser estrictamente `null` o `undefined`, y los datos resultantes se entregan en el segundo parámetro en adelante.\n- **Por qué se diseñó así**:\n- En código asíncrono basado en callbacks del Event Loop, un bloque `try/catch` síncrono no puede capturar errores lanzados dentro de la función de callback.\n- Forzar a que el error sea el primer parámetro obliga al desarrollador a comprobar el estado de salud de la operación antes de intentar consumir los datos:\n  ```javascript\n  fs.readFile('datos.txt', (err, data) => {\n    if (err) {\n      return console.error('Falló la lectura:', err);\n    }\n    console.log('Contenido:', data.toString());\n  });\n  ```"
+            },
+            {
+              "id": "nodejs-core-q123",
+              "number": 123,
+              "title": "¿Qué es una Promesa en JavaScript, cuáles son sus 3 estados posibles y cómo reemplaza a los callbacks anidados?",
+              "seniority": "Junior",
+              "redFlag": "Creer que una Promesa puede resolverse múltiples veces con valores diferentes (confundirla con un Observable o un Stream).",
+              "greenFlag": "Destacar la garantía de que los callbacks de `.then()` siempre se despachan de forma asíncrona en la cola de Microtasks, incluso si la promesa ya estaba resuelta sincrónicamente.",
+              "answer": "Una Promesa es un objeto que representa la eventual finalización (con éxito) o fracaso de una operación asíncrona y su valor resultante:\n- **Los 3 Estados Mutuamente Excluyentes**:\n1. **`Pending` (Pendiente)**: Estado inicial; la operación asíncrona aún no ha terminado.\n2. **`Fulfilled` (Cumplida / Resuelta)**: La operación se completó con éxito; la promesa tiene un valor inmutable.\n3. **`Rejected` (Rechazada)**: La operación falló; la promesa tiene un motivo de rechazo (`reason`, habitualmente un objeto `Error`).\n- **Inmutabilidad de estado**: Una vez que una promesa pasa a `Fulfilled` o `Rejected` (*Settled*), su estado y valor quedan congelados y no pueden cambiar jamás.\n- **Reemplazo del Callback Hell**: Permite el encadenamiento plano mediante `.then()` y captura centralizada de errores con un único `.catch()`:\n```javascript\nleerArchivo('usuario.json')\n  .then(user => consultarPermisos(user.id))\n  .then(permisos => invocarServicio(permisos.token))\n  .catch(err => manejarErrorCentralizado(err));\n```"
+            },
+            {
+              "id": "nodejs-core-q124",
+              "number": 124,
+              "title": "¿Cómo funciona `util.promisify()` para convertir funciones clásicas basadas en callbacks a funciones que devuelven Promesas?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Intentar usar `util.promisify` con funciones que no siguen la convención Error-First (ej. callbacks del navegador que reciben `(result, err)` o múltiples argumentos de éxito) sin configurar el custom symbol.",
+              "greenFlag": "Mencionar la existencia de los módulos nativos `node:fs/promises`, `node:stream/promises`, etc., que hacen obsoleto el uso manual de `promisify` para las APIs core.",
+              "answer": "`util.promisify()` es una función utilitaria del módulo nativo `node:util` que toma una función que sigue la convención tradicional de Node.js (*Error-First Callback*) y devuelve una nueva versión que retorna una Promesa:\n```javascript\nimport util from 'node:util';\nimport fs from 'node:fs';\n// fs.readFile tradicional usa: (err, data) => {}\nconst readFilePromise = util.promisify(fs.readFile);\ntry {\nconst data = await readFilePromise('archivo.txt', 'utf8');\nconsole.log(data);\n} catch (err) {\nconsole.error('Error al leer:', err);\n}\n```\n- **Símbolo personalizado (`util.promisify.custom`)**: Si una función no sigue exactamente el patrón de un único callback final con `(err, result)`, la biblioteca puede definir un método con el Symbol `util.promisify.custom` para proveer su propia implementación de Promesa.\n- *Nota moderna*: Desde Node.js 14+, módulos nativos como `fs`, `dns` y `readline` ya exponen APIs nativas de promesas directamente (ej. `node:fs/promises`), reduciendo la necesidad de usar `promisify`."
+            },
+            {
+              "id": "nodejs-core-q125",
+              "number": 125,
+              "title": "¿Cómo funciona la sintaxis `async / await` por debajo y por qué es solo \"azúcar sintáctico\" sobre las Promesas?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Creer que `await` bloquea el hilo principal del sistema o del proceso como lo haría `fs.readFileSync`.",
+              "greenFlag": "Demostrar que el manejo de errores con `try/catch` en `async/await` captura tanto excepciones síncronas como rechazos de promesas asíncronas.",
+              "answer": "`async / await` es una capa sintáctica introducida en ECMAScript 2017 para escribir código asíncrono con la estructura visual y ergonomía del código síncrono:\n- **Mecanismo de `async`**:\n- Cualquier función marcada con `async` **siempre devuelve una Promesa**, sin excepción. Si la función retorna un valor primitivo `return 42;`, el motor lo envuelve automáticamente en `Promise.resolve(42)`. Si arroja un error con `throw new Error()`, devuelve una promesa rechazada `Promise.reject(err)`.\n- **Mecanismo de `await`**:\n- Solo puede usarse dentro de funciones `async` (o en el nivel superior de un módulo ESM).\n- Pausa la ejecución de la función `async` actual de forma no bloqueante: cede el control al Event Loop para que siga atendiendo otras tareas.\n- Cuando la promesa esperada se resuelve en la cola de Microtasks, el motor reanuda la ejecución de la función desde la línea siguiente con el valor desempaquetado.\n- Por debajo, los motores de JavaScript (V8) implementan `async/await` combinando **Generadores (funciones `function*` y `yield`) con la resolución de Promesas**."
+            },
+            {
+              "id": "nodejs-core-q126",
+              "number": 126,
+              "title": "¿Cuál es la diferencia entre `Promise.all()`, `Promise.allSettled()`, `Promise.race()` y `Promise.any()` y cuándo usar cada uno?",
+              "seniority": "Mid-Level",
+              "redFlag": "Usar `Promise.all` para operaciones independientes y perder los resultados de 99 tareas porque 1 falló.",
+              "greenFlag": "Conocer con precisión la diferencia entre `Promise.race` (gana la primera que termine, incluso con error) vs `Promise.any` (espera la primera exitosa e ignora errores hasta que fallen todas).",
+              "answer": "Son los cuatro combinadores estándar de Promesas de JavaScript:\n1. **`Promise.all([p1, p2, ...])`**:\n - *Comportamiento*: Espera a que **todas** las promesas se resuelvan con éxito. Devuelve un array con todos los resultados.\n - *Short-circuit*: Falla de inmediato si **al menos una** se rechaza (falla rápido).\n - *Uso*: Operaciones atómicas dependientes (ej. cargar usuario Y cargar sus permisos; si uno falla, no se puede continuar).\n2. **`Promise.allSettled([p1, p2, ...])`**:\n - *Comportamiento*: Espera a que **todas** terminen, sin importar si triunfaron o fallaron.\n - Devuelve un array de objetos con estado: `{ status: 'fulfilled', value }` o `{ status: 'rejected', reason }`.\n - *Uso*: Tareas independientes donde se desea conocer el resultado de cada una (ej. enviar 100 correos electrónicos; si 2 fallan, queremos registrar cuáles fueron y continuar con los 98 exitosos).\n3. **`Promise.race([p1, p2, ...])`**:\n - *Comportamiento*: Retorna el valor o error de la **primera promesa que termine** (sea resolución o rechazo).\n - *Uso*: Implementar timeouts competitivos (ej. la petición HTTP vs una promesa de timeout que se rechaza a los 5 segundos).\n4. **`Promise.any([p1, p2, ...])`**:\n - *Comportamiento*: Espera a que la **primera promesa exitosa** se resuelva.\n - Solo falla si **todas** son rechazadas (arrojando un `AggregateError`).\n - *Uso*: Consultar múltiples servidores réplica o mirrors de contenido; el primero que responda con datos válidos gana."
+            },
+            {
+              "id": "nodejs-core-q127",
+              "number": 127,
+              "title": "¿Por qué es un antipatrón envolver una llamada `await` dentro de un bucle `forEach` y qué estructura debe usarse en su lugar?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Escribir `array.forEach(async () => { ... })` en un endpoint y responder la petición HTTP antes de que las operaciones de base de datos finalicen.",
+              "greenFlag": "Distinguir cuándo se requiere ejecución estrictamente secuencial (`for...of`) vs paralela (`Promise.all(map)`).",
+              "answer": "El método `Array.prototype.forEach` espera una función de callback síncrona. No espera ni gestiona las Promesas devueltas por callbacks marcados como `async`:\n```javascript\n// ❌ ANTIPATRÓN:\nasync function guardarUsuarios(usuarios) {\nusuarios.forEach(async (user) => {\n  await db.save(user); // forEach no espera esta promesa\n});\nconsole.log('¿Todos guardados?'); // Se imprime de inmediato, ¡antes de que la BD termine!\n}\n```\n- **Problemas**:\n1. Las promesas se lanzan concurrentemente sin control ni orden.\n2. El código posterior al `forEach` se ejecuta inmediatamente, asumiendo falsamente que el trabajo concluyó.\n3. Si una de las promesas falla dentro del `forEach`, se genera una excepción no capturada (`UnhandledPromiseRejection`).\n- **Soluciones correctas**:\n- **Para ejecución secuencial**: Usar un bucle clásico `for...of`:\n  ```javascript\n  for (const user of usuarios) {\n    await db.save(user); // Espera estrictamente cada iteración\n  }\n  ```\n- **Para ejecución en paralelo controlada**: Usar `map` con `Promise.all`:\n  ```javascript\n  await Promise.all(usuarios.map(user => db.save(user)));\n  ```"
+            },
+            {
+              "id": "nodejs-core-q128",
+              "number": 128,
+              "title": "¿Qué es el \"Top-Level Await\" en ES Modules y qué ventajas ofrece al inicializar conexiones o configuraciones?",
+              "seniority": "Mid-Level",
+              "redFlag": "Intentar usar Top-Level Await dentro de un archivo CommonJS (`.cjs`) donde arroja un `SyntaxError`.",
+              "greenFlag": "Advertir que si un módulo con Top-Level Await tarda 10 segundos en resolver una promesa (ej. timeout de red), bloqueará la carga de todo el árbol de módulos dependientes.",
+              "answer": "Tradicionalmente en JavaScript, la palabra clave `await` solo podía utilizarse en el cuerpo de una función marcada con `async`. Si un módulo requería conectar a una base de datos antes de exportar un modelo, obligaba a crear funciones de inicialización engorrosas tipo `init()`.\n- **Top-Level Await (introducido en ECMAScript 2022 y soportado en Node.js ESM)**:\n- Permite usar `await` directamente en la raíz de un módulo ES Module (sin envolverlo en una función `async`).\n- El módulo completo actúa conceptualmente como una gran función asíncrona:\n  ```javascript\n  // db.js (ES Module)\n  import { createConnection } from 'mi-db-client';\n   // Top-level await\n  export const connection = await createConnection(process.env.DB_URL);\n  ```\n- **Ventajas arquitectónicas**:\n1. **Inicialización garantizada**: Los módulos consumidores que importen `connection` de `db.js` no comenzarán su propia ejecución hasta que la promesa del top-level await en `db.js` se haya resuelto satisfactoriamente.\n2. **Carga dinámica de recursos condicionales**: Permite cargar drivers o traducciones en la raíz del módulo de forma asíncrona (`const driver = await import(tipoDriver)`)."
+            },
+            {
+              "id": "nodejs-core-q129",
+              "number": 129,
+              "title": "¿Qué sucede si una Promesa es rechazada y no se captura con `.catch()` o `try/catch` (`UnhandledPromiseRejection`)?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Creer que los rechazos de promesas se ignoran silenciosamente sin afectar la estabilidad del servidor en versiones modernas de Node.js.",
+              "greenFlag": "Explicar por qué Node.js cambió la política para matar el proceso de forma determinista y evitar estado de memoria corrupto (*Fail-Fast*).",
+              "answer": "Cuando una Promesa es rechazada y en ese tick del Event Loop no existe ningún manejador de error (ni un `.catch()`, ni el segundo callback de `.then()`, ni un bloque `try/catch` rodeando un `await`):\n- **Evolución histórica en Node.js**:\n- *Node.js <= 14*: Emitía una advertencia en la terminal (`DeprecationWarning: UnhandledPromiseRejection`), pero el proceso continuaba ejecutándose, dejando a menudo la aplicación en un estado zombi o corrupto.\n- *Node.js >= 15+ (Comportamiento actual)*: Por defecto, cualquier rechazo de promesa no capturado **provoca la caída inmediata del proceso con código de salida 1** (`ERR_UNHANDLED_REJECTION`), deteniendo el servidor por seguridad.\n- **Manejo global de emergencia**:\n- Se puede escuchar el evento en el proceso:\n  ```javascript\n  process.on('unhandledRejection', (reason, promise) => {\n    logger.error('Promesa no capturada:', reason);\n    // Cerrar recursos e iniciar salida controlada\n  });\n  ```"
+            },
+            {
+              "id": "nodejs-core-q130",
+              "number": 130,
+              "title": "¿Cómo cancelar una operación asíncrona en Node.js moderno utilizando la API estándar `AbortController` y `AbortSignal`?",
+              "seniority": "Mid-Level",
+              "redFlag": "Desconocer `AbortController` e intentar implementar mecanismos caseros con booleanos que no interrumpen los sockets de red subyacentes.",
+              "greenFlag": "Mencionar el uso de `AbortSignal.timeout(ms)` (disponible en Node 18+) como la forma más elegante y concisa de aplicar timeouts sin instanciar controladores manuales.",
+              "answer": "Durante años Node.js careció de un mecanismo unificado para cancelar operaciones asíncronas en curso (como peticiones HTTP, timers o lecturas de disco). A partir de Node.js 15+, se incorporó el estándar del W3C **`AbortController`**:\n- **Componentes**:\n1. **`controller = new AbortController()`**: La entidad que emite la orden de cancelación mediante `controller.abort()`.\n2. **`controller.signal`**: Objeto `AbortSignal` que se pasa a las funciones asíncronas que soportan cancelación.\n- **Ejemplo con `fetch` o APIs nativas**:\n```javascript\nconst controller = new AbortController();\nconst timeout = setTimeout(() => controller.abort(), 3000); // 3 seg timeout\n try {\n  const res = await fetch('https://api.externa.com/datos', {\n    signal: controller.signal\n  });\n  const data = await res.json();\n} catch (err) {\n  if (err.name === 'AbortError') {\n    console.warn('La petición fue abortada por timeout');\n  } else {\n    console.error('Error de red:', err);\n  }\n} finally {\n  clearTimeout(timeout);\n}\n```\n- **Soporte nativo en Node.js**: Prácticamente todas las APIs modernas de Node.js soportan señales de aborto: `node:fs/promises`, `node:events` (`events.on`), `node:stream` y timers (`setTimeout` de `timers/promises`)."
+            }
+          ]
+        },
+        {
+          "id": "sec-14",
+          "title": "14. Event Driven Architecture: EventEmitter y Manejo de Errores",
+          "questions": [
+            {
+              "id": "nodejs-core-q131",
+              "number": 131,
+              "title": "¿Qué es la clase nativa `EventEmitter` del módulo `node:events` y cuál es la diferencia entre `.on()` y `.once()`?",
+              "seniority": "Mid-Level",
+              "redFlag": "Creer que los callbacks de `EventEmitter` se ejecutan asíncronamente por defecto. Por especificación, `emitter.emit()` invoca a todos los listeners registrados de forma **completamente síncrona** en el orden en que fueron registrados.",
+              "greenFlag": "Mencionar que los listeners de un `EventEmitter` se invocan de forma síncrona y advertir sobre el riesgo de bloquear el hilo si un listener contiene lógica pesada.",
+              "answer": "El patrón publicador/suscriptor (*Observer Pattern*) es la columna vertebral de Node.js. Gran parte del ecosistema (`Stream`, `Server`, `Socket`, `process`) hereda de la clase **`EventEmitter`**:\n- **Mecanismo**:\n- Permite a un objeto emitir eventos con nombre (`emitter.emit('nombreEvento', ...args)`) y a uno o más consumidores escuchar y reaccionar a esos eventos con funciones de callback.\n- **Diferencia entre `.on()` y `.once()`**:\n- **`emitter.on(evento, callback)`**: Registra un listener permanente. El callback se ejecutará **cada vez** que el evento sea emitido a lo largo del tiempo de vida del emisor.\n- **`emitter.once(evento, callback)`**: Registra un listener de un solo uso. El callback se ejecutará la **primera vez** que se emita el evento; inmediatamente después, el emisor lo remueve internamente de su lista de listeners. Ideal para eventos únicos como `'connect'`, `'close'` o `'ready'`."
+            },
+            {
+              "id": "nodejs-core-q132",
+              "number": 132,
+              "title": "¿Por qué es crítico registrar un listener para el evento `'error'` en un `EventEmitter` y qué sucede si no se hace?",
+              "seniority": "Mid-Level",
+              "redFlag": "No saber qué ocurre cuando se hace `emitter.emit('error', err)` sin un `.on('error')` configurado.",
+              "greenFlag": "Explicar la convención especial del evento `'error'` en la especificación de `node:events` y cómo previene que fallos críticos pasen inadvertidos en modo silencioso.",
+              "answer": "El evento con el nombre especial **`'error'`** tiene un tratamiento único y privilegiado en la implementación de `EventEmitter` de Node.js:\n- **Comportamiento especial**:\n- Si un `EventEmitter` emite cualquier evento ordinario (ej. `'data'`, `'userLogin'`) y no hay ningún listener escuchándolo, Node.js simplemente no hace nada y continúa la ejecución.\n- **Pero si emite el evento `'error'` y NO tiene al menos un listener registrado**:\n  Node.js trata esto como una condición fatal no controlada: **lanza el error como una excepción no capturada en el hilo principal de JavaScript**, provocando que el proceso imprima el stack trace y se autodestruya (`process.exit(1)`).\n- **Regla de oro de diseño**:\n- Cualquier clase o módulo que herede o instancie un `EventEmitter` y que pueda fallar en segundo plano debe tener siempre registrado un listener para `'error'`:\n  ```javascript\n  const stream = fs.createReadStream('archivo-inexistente.txt');\n  stream.on('error', (err) => {\n    console.error('Error controlado en el stream:', err.message);\n  });\n  ```"
+            },
+            {
+              "id": "nodejs-core-q133",
+              "number": 133,
+              "title": "¿Qué causa la advertencia `MaxListenersExceededWarning` en Node.js y por qué silenciarla con `emitter.setMaxListeners(0)` suele ocultar un memory leak?",
+              "seniority": "Mid-Level",
+              "redFlag": "Recomendar `emitter.setMaxListeners(0)` o `emitter.setMaxListeners(Infinity)` como solución estándar ante la advertencia.",
+              "greenFlag": "Diagnosticar la raíz de la fuga explicando cómo registrar y remover listeners dinámicamente con `.removeListener()` o utilizando `AbortSignal` en eventos.",
+              "answer": "- **Por defecto**: Todo `EventEmitter` tiene un límite de seguridad configurado en **10 listeners** por cada evento individual.\n- **La advertencia**:\n- Si se agregan más de 10 funciones a un mismo evento (ej. `emitter.on('data', fn11)`), Node.js emite por consola un `MaxListenersExceededWarning`:\n  *`Possible EventEmitter memory leak detected. 11 data listeners added.`*\n- **Por qué ocurre (la causa real)**:\n- Rara vez se diseñan arquitecturas donde legítimamente 15 partes del código necesitan escuchar el mismo evento. Casi siempre se produce porque el desarrollador añade un listener dentro de un ciclo o dentro de un manejador de peticiones HTTP:\n  ```javascript\n  // ❌ Fuga clásica: por cada petición HTTP se añade un listener al socket global\n  app.get('/evento', (req, res) => {\n    servidorGlobal.on('notificacion', (msg) => res.send(msg));\n  });\n  ```\n- Con cada usuario que entra, se acumula un nuevo listener y una closure en memoria que nunca se limpia.\n- **El antipatrón de silenciar la advertencia**:\n- Poner `emitter.setMaxListeners(0)` o un número gigante elimina el mensaje de la terminal pero **no resuelve la fuga**: la memoria seguirá creciendo hasta que el servidor sufra un colapso por falta de RAM (*OOM Crash*)."
+            },
+            {
+              "id": "nodejs-core-q134",
+              "number": 134,
+              "title": "¿Cómo y cuándo deben removerse los listeners con `.removeListener()` o `.off()` para evitar fugas de memoria en servidores?",
+              "seniority": "Mid-Level",
+              "redFlag": "Intentar remover un listener anónimo pasando una nueva arrow function inline.",
+              "greenFlag": "Utilizar la opción `{ signal }` de `emitter.on` para gestionar el ciclo de vida del listener de forma declarativa con `AbortController`.",
+              "answer": "Para que el Garbage Collector pueda reclamar la memoria de una función de listener y de las variables capturadas en su closure, el listener debe removerse explícitamente cuando ya no sea necesario:\n- **Sintaxis**: `emitter.off(evento, listener)` (alias de `emitter.removeListener`).\n- **Requisito crítico (Referencia Nombrada)**:\n- Para poder remover un listener, se debe pasar **la misma referencia de función exacta** que se utilizó al registrarlo.\n- Las funciones anónimas o flecha creadas inline **no se pueden remover**:\n  ```javascript\n  // ❌ IMPOSIBLE DE REMOVER:\n  emitter.on('evento', () => console.log('hola'));\n  emitter.off('evento', () => console.log('hola')); // Crea OTRA función diferente en memoria; no remueve nada.\n   // ✅ CORRECTO:\n  function miHandler() { console.log('hola'); }\n  emitter.on('evento', miHandler);\n  // Más tarde:\n  emitter.off('evento', miHandler);\n  ```\n- **Alternativa moderna (Node 15+) con `AbortSignal`**:\n```javascript\nconst ac = new AbortController();\nemitter.on('evento', handler, { signal: ac.signal });\n// Al abortar, el listener se desconecta automáticamente:\nac.abort();\n```"
+            },
+            {
+              "id": "nodejs-core-q135",
+              "number": 135,
+              "title": "¿Cuál es la diferencia entre un error operacional (fallo de entorno o entrada) y un error del programador (bug de código)?",
+              "seniority": "Mid-Level",
+              "redFlag": "Tratar todos los errores por igual colocando un `catch (err) { /* no hacer nada */ }` para ignorar `TypeErrors`.",
+              "greenFlag": "Clasificar explícitamente los errores en operacionales vs programador y relacionarlo con la estrategia de auto-sanación de contenedores.",
+              "answer": "Esta distinción es fundamental en la arquitectura de resiliencia de Node.js (popularizada por Joyent):\n1. **Errores Operacionales (Operational Errors)**:\n - No son fallos en el código; son situaciones adversas normales pero esperadas en sistemas que interactúan con el mundo exterior:\n - Ejemplos: Servidor de base de datos no disponible, timeout de red, archivo no encontrado (`ENOENT`), certificado TLS caducado, entrada de usuario inválida (validación 400).\n - **Estrategia**: Deben ser anticipados, capturados y gestionados graciosamente (reintentar con backoff exponencial, registrar advertencia y responder con un código HTTP apropiado al cliente).\n2. **Errores del Programador (Programmer Errors / Bugs)**:\n - Son fallos reales en la lógica del código cometidos por los desarrolladores.\n - Ejemplos: `TypeError: Cannot read property of undefined`, pasar un string donde se requería un objeto, sintaxis inválida, pasar un número erróneo de parámetros.\n - **Estrategia**: No se deben intentar silenciar con `try/catch` para seguir operando como si nada. La aplicación entra en un estado corrupto desconocido. La estrategia correcta es **Fail-Fast**: registrar el stack trace completo y reiniciar el proceso de forma controlada mediante un orquestador (Kubernetes / systemd)."
+            },
+            {
+              "id": "nodejs-core-q136",
+              "number": 136,
+              "title": "¿Cómo crear clases de error personalizadas heredando de `Error` que incluyan códigos HTTP y metadatos de contexto?",
+              "seniority": "Mid-Level",
+              "redFlag": "Retornar strings o simples objetos planos `{ error: 'no encontrado' }` en lugar de instanciar clases que hereden de `Error`, perdiendo el stack trace.",
+              "greenFlag": "Mencionar el uso de `Error.captureStackTrace` para mantener la trazabilidad limpia y legible en sistemas de observabilidad.",
+              "answer": "Para estructurar APIs profesionales y centralizar el manejo de errores, se recomienda extender la clase nativa `Error`:\n```javascript\nexport class AppError extends Error {\nconstructor(message, statusCode = 500, errorCode = 'INTERNAL_ERROR', isOperational = true) {\n  super(message);\n  this.name = this.constructor.name;\n  this.statusCode = statusCode;\n  this.errorCode = errorCode;\n  this.isOperational = isOperational;\n   // Captura el stack trace excluyendo el constructor del error personalizado\n  Error.captureStackTrace(this, this.constructor);\n}\n}\nexport class NotFoundError extends AppError {\nconstructor(recurso = 'Recurso') {\n  super(`${recurso} no encontrado`, 404, 'NOT_FOUND');\n}\n}\n```\n- **Puntos clave**:\n1. **`super(message)`**: Asigna el mensaje e inicializa la cadena de prototipos nativa de JavaScript.\n2. **`Error.captureStackTrace(this, constructor)`**: Método utilitario propio de V8 que genera la traza de pila (`stack`) ocultando las funciones internas del framework o de la clase de error, dejando el rastro limpio exactamente donde ocurrió el incidente.\n3. Permite a los middlewares de error de Express/Fastify responder al cliente de forma uniforme: `res.status(err.statusCode).json({ error: err.errorCode, message: err.message })`."
+            },
+            {
+              "id": "nodejs-core-q137",
+              "number": 137,
+              "title": "¿Para qué sirven los eventos globales `uncaughtException` y `unhandledRejection` y por qué no deben usarse para control de flujo?",
+              "seniority": "Mid-Level",
+              "redFlag": "Proponer capturar `uncaughtException` para \"mantener la aplicación encendida 24/7 sin que se caiga\".",
+              "greenFlag": "Argumentar con firmeza que ante un `uncaughtException`, reiniciar el proceso es la única conducta arquitectónicamente segura para evitar corrupción de datos.",
+              "answer": "- **`process.on('uncaughtException', (err, origin) => { ... })`**:\n- Se dispara cuando una excepción síncrona en JavaScript burbujea por toda la pila de llamadas sin ser capturada por ningún bloque `try/catch`.\n- **`process.on('unhandledRejection', (reason, promise) => { ... })`**:\n- Se dispara cuando una Promesa es rechazada y no tiene ningún manejador `.catch()` asociado.\n- **Por qué NO deben usarse como mecanismo de control de flujo ordinario**:\n1. **Estado impredecible de la memoria**: Cuando ocurre un `uncaughtException`, el contexto de la aplicación se ha roto de forma indeterminada. Puede haber descriptores de sockets abiertos a medias, conexiones de base de datos en estado inconsistente o transacciones no confirmadas.\n2. **Propósito real (Última línea de defensa)**: Su única función es registrar el error en los logs centrales de observabilidad, cerrar limpiamente los servidores de red (`server.close()`) y salir de inmediato con `process.exit(1)` para que Kubernetes levante una réplica fresca."
+            },
+            {
+              "id": "nodejs-core-q138",
+              "number": 138,
+              "title": "¿Cómo estructurar un bloque `try/catch/finally` al manejar recursos como descriptores de archivo o conexiones que deben cerrarse obligatoriamente?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Cerrar recursos solo al final del `try`, olvidando el camino de error y provocando fugas de conexiones o descriptores.",
+              "greenFlag": "Explicar la garantía de ejecución de `finally` y citar el error de sistema `EMFILE` que ocurre si se acumulan descriptores abiertos.",
+              "answer": "Cuando se trabaja con recursos finitos del sistema operativo (descriptores de archivos, conexiones de bases de datos, sockets), es imperativo garantizar su liberación sin importar si la operación tuvo éxito o arrojó un error:\n```javascript\nimport fs from 'node:fs/promises';\nasync function procesarArchivoSeguro(ruta) {\nlet fileHandle = null;\ntry {\n  fileHandle = await fs.open(ruta, 'r');\n  const data = await fileHandle.readFile('utf8');\n  return JSON.parse(data);\n} catch (err) {\n  console.error('Fallo durante el procesamiento:', err);\n  throw err; // Relanzar tras registrar\n} finally {\n  // El bloque finally se ejecuta SIEMPRE:\n  // tanto si el bloque try terminó con éxito como si se lanzó una excepción\n  if (fileHandle) {\n    await fileHandle.close();\n    console.log('Descriptor de archivo cerrado con éxito');\n  }\n}\n}\n```\n- **Fuga típica**: Si no se usa `finally` y se coloca `fileHandle.close()` al final del bloque `try`, una excepción en `JSON.parse` abortará la función antes del cierre, agotando los file descriptors del sistema operativo (`EMFILE: too many open files`).\n- *Alternativa moderna*: Usar la nueva sintaxis de gestión explícita de recursos de JavaScript (`using` / `Symbol.asyncDispose`) en entornos compatibles."
+            },
+            {
+              "id": "nodejs-core-q139",
+              "number": 139,
+              "title": "¿Qué es el módulo nativo `node:assert` y cómo se utiliza para escribir validaciones defensivas en código de aplicación?",
+              "seniority": "Mid-Level",
+              "redFlag": "Usar aserciones legadas no estrictas (`assert.equal`) que realizan coerción de tipos imprevista.",
+              "greenFlag": "Utilizar `node:assert/strict` para validar precondiciones e invariantes arquitectónicas en servicios críticos de dominio.",
+              "answer": "`node:assert` es el módulo nativo de aserciones de Node.js, utilizado tradicionalmente para suites de tests y para **programación defensiva** (*Invariants* de código):\n- **Modo estricto (`node:assert/strict` o `assert.strict`):**\n- En versiones modernas de Node.js, se debe usar siempre el modo estricto, el cual utiliza comparaciones estrictas (`===`) en lugar de coercitivas (`==`):\n  ```javascript\n  import assert from 'node:assert/strict';\n   function transferirFondos(origen, destino, monto) {\n    assert(typeof monto === 'number' && monto > 0, new TypeError('El monto debe ser un número positivo'));\n    assert(origen.balance >= monto, new Error('Balance insuficiente'));\n     // Comparación profunda de objetos\n    assert.deepEqual(origen.moneda, destino.moneda, 'Las cuentas deben tener la misma divisa');\n  }\n  ```\n- **Comportamiento ante fallo**:\n- Si la aserción evalúa a falso, arroja de inmediato una excepción de clase `assert.AssertionError`.\n- Ayuda a detectar violaciones de contratos antes de persistir datos corruptos en bases de datos."
+            },
+            {
+              "id": "nodejs-core-q140",
+              "number": 140,
+              "title": "¿Cuál es la diferencia entre propagar un error hacia arriba mediante `throw` vs registrarlo y absorberlo silenciosamente?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Escribir bloques `catch` vacíos que tragan los errores impidiendo que los llamadores se enteren de que la operación falló.",
+              "greenFlag": "Usar la propiedad estándar `cause` (`new Error('mensaje', { cause: errOriginal })`) para encadenar errores sin perder la causa raíz.",
+              "answer": "- **Absorber el error silenciosamente (Antipatrón frecuente)**:\n```javascript\n// ❌ ABSORCIÓN SILENCIOSA:\ntry {\n  await db.cobrarTarjeta(usuario, monto);\n} catch (err) {\n  console.log('Ocurrió un error'); // Se registra por consola y no se hace nada más\n}\n// El código continúa como si el cobro hubiera tenido éxito: ¡se entrega el producto gratis!\n```\n- Hace que la aplicación continúe en un estado desincronizado y oculta bugs graves a los sistemas de alerta y monitorización.\n- **Propagación responsable (`rethrow`)**:\n```javascript\n// ✅ REGISTRAR Y PROPAGAR:\ntry {\n  await db.cobrarTarjeta(usuario, monto);\n} catch (err) {\n  logger.error('Error al procesar cobro en pasarela:', { usuarioId: usuario.id, error: err });\n  // Enriquecer y propagar para que el middleware HTTP responda 502 al cliente\n  throw new PaymentGatewayError('Fallo al procesar el pago con el banco', { cause: err });\n}\n```\n- **Regla fundamental**: Solo se debe capturar un error sin relanzarlo si la capa actual sabe exactamente cómo solucionar la situación (ej. recurrir a una caché secundaria válida). Si no puede resolverlo, debe registrar el contexto y relanzarlo hacia las capas superiores."
+            }
+          ]
+        },
+        {
+          "id": "sec-15",
+          "title": "15. Módulos Nativos Clave: HTTP, File System, Path y Utilidades",
+          "questions": [
+            {
+              "id": "nodejs-core-q141",
+              "number": 141,
+              "title": "¿Cómo crear un servidor HTTP básico sin frameworks externos utilizando el módulo nativo `node:http` y `http.createServer()`?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "No ser capaz de levantar un servidor HTTP mínimo sin recurrir a instalar `express`.",
+              "greenFlag": "Explicar que `req` es un Readable Stream y `res` es un Writable Stream, y que llamar a `res.end()` es obligatorio para cerrar la conexión HTTP con el cliente.",
+              "answer": "Node.js incluye de serie el módulo `node:http`, capaz de actuar como servidor web de producción de alto rendimiento:\n```javascript\nimport http from 'node:http';\nconst PORT = process.env.PORT || 3000;\nconst server = http.createServer((req, res) => {\n// req es un http.IncomingMessage (Readable Stream)\n// res es un http.ServerResponse (Writable Stream)\nif (req.method === 'GET' && req.url === '/health') {\n  res.writeHead(200, { 'Content-Type': 'application/json' });\n  res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }));\n  return;\n}\n res.writeHead(404, { 'Content-Type': 'text/plain' });\nres.end('Ruta no encontrada');\n});\nserver.listen(PORT, () => {\nconsole.log(`Servidor escuchando en http://localhost:${PORT}`);\n});\n```\n- **Comprensión de bajo nivel**: Frameworks populares como Express.js son simplemente capas de middleware y abstracción construidas directamente encima de este mismo método `http.createServer`."
+            },
+            {
+              "id": "nodejs-core-q142",
+              "number": 142,
+              "title": "¿Qué representan los objetos `IncomingMessage` (`req`) y `ServerResponse` (`res`) en un servidor HTTP nativo de Node.js?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Creer que el cuerpo de la petición (`req.body`) ya viene parseado y disponible de forma inmediata como un objeto JSON sin procesar los streams.",
+              "greenFlag": "Reconocer que `req` y `res` son Streams nativos de Node.js, lo que permite canalizar datos con `.pipe()` sin cargar gigabytes en memoria.",
+              "answer": "Ambos son los argumentos principales que recibe la función de callback en `http.createServer((req, res) => ...)`:\n1. **`req` (`http.IncomingMessage`)**:\n - Representa la petición entrante del cliente.\n - Es una instancia de **`stream.Readable`**: el cuerpo de la petición (*request body*) llega en fragmentos binarios (*chunks*) a medida que viajan por los paquetes TCP de la red.\n - Contiene metadatos leídos de los encabezados HTTP: `req.method` (GET, POST), `req.url` (ruta solicitada), `req.headers` (objeto con headers en minúsculas) y `req.socket` (conexión TCP subyacente).\n2. **`res` (`http.ServerResponse`)**:\n - Representa la respuesta que se enviará de vuelta al cliente.\n - Es una instancia de **`stream.Writable`**: permite escribir encabezados y enviar datos en streaming hacia el cliente.\n - Métodos principales:\n   - `res.writeHead(statusCode, [statusMessage], [headers])`: Envía los bytes de la línea de estado HTTP y los headers.\n   - `res.write(chunk)`: Envía un fragmento del cuerpo de la respuesta.\n   - `res.end([data])`: Envía los últimos datos y notifica al socket TCP que la respuesta HTTP ha concluido (emite el fin del stream)."
+            },
+            {
+              "id": "nodejs-core-q143",
+              "number": 143,
+              "title": "¿Cómo leer el cuerpo (*request body*) de una petición POST en `node:http` nativo escuchando los eventos `'data'` y `'end'`?",
+              "seniority": "Mid-Level",
+              "redFlag": "Concatenar los chunks directamente como strings (`body += chunk`) en vez de acumular Buffers en un array, lo que corrompe caracteres multibyte (como tildes o emojis) si un chunk se divide en medio de un byte UTF-8.",
+              "greenFlag": "Acumular los fragmentos en un array y usar `Buffer.concat(chunks)` para decodificar una sola vez al finalizar, advirtiendo sobre el control del límite de tamaño del payload.",
+              "answer": "Al ser `req` un Readable Stream, el cuerpo de una petición POST no está disponible inmediatamente en memoria; debe recolectarse fragmento a fragmento (*chunks* de tipo `Buffer`):\n```javascript\nimport http from 'node:http';\nconst server = http.createServer((req, res) => {\nif (req.method === 'POST' && req.url === '/api/usuarios') {\n  const chunks = [];\n   // Se dispara cada vez que llega un paquete de datos por el socket\n  req.on('data', (chunk) => {\n    chunks.push(chunk);\n  });\n   // Se dispara cuando se han recibido todos los bytes\n  req.on('end', () => {\n    try {\n      const rawBody = Buffer.concat(chunks).toString('utf8');\n      const data = JSON.parse(rawBody);\n       res.writeHead(201, { 'Content-Type': 'application/json' });\n      res.end(JSON.stringify({ guardado: true, usuario: data }));\n    } catch (err) {\n      res.writeHead(400, { 'Content-Type': 'application/json' });\n      res.end(JSON.stringify({ error: 'JSON malformado' }));\n    }\n  });\n  return;\n}\n});\n```\n- **Seguridad**: En producción se debe limitar el tamaño máximo de `chunks` para evitar ataques de denegación de servicio (DoS) por agotamiento de memoria si un cliente envía un archivo malicioso de 2 GB."
+            },
+            {
+              "id": "nodejs-core-q144",
+              "number": 144,
+              "title": "¿Cuáles son las diferencias entre `node:fs` (callbacks), `node:fs/promises` (Promesas) y las variantes síncronas (`*Sync`)?",
+              "seniority": "Junior",
+              "redFlag": "Usar `fs.readFileSync` dentro de un controlador de peticiones de una API REST porque \"es más fácil y no requiere async\".",
+              "greenFlag": "Usar de forma consistente `node:fs/promises` con `async/await` y manejo adecuado de excepciones `ENOENT` en bloques `try/catch`.",
+              "answer": "El módulo nativo de sistema de archivos ofrece 3 paradigmas de uso:\n1. **`node:fs/promises` (Recomendado para código moderno)**:\n - Métodos basados en Promesas y compatibles con `async / await`:\n   ```javascript\n   import fs from 'node:fs/promises';\n   const contenido = await fs.readFile('config.json', 'utf8');\n   ```\n - Delega la I/O al ThreadPool de Libuv de forma no bloqueante; el hilo de JS queda libre.\n2. **`node:fs` tradicional (Callbacks Error-First)**:\n - El API original de Node.js: `fs.readFile('config.json', (err, data) => ...)`.\n - No bloqueante, pero propensa a anidación de callbacks si no se utiliza con librerías auxiliares.\n3. **Variantes Síncronas (`fs.readFileSync`, `fs.writeFileSync`)**:\n - Detienen y congelan la ejecución de todo el hilo principal de JavaScript hasta que el disco físico responde.\n - **Regla de uso**: Válidas únicamente en scripts CLI breves o durante el arranque inicial de una aplicación antes de llamar a `server.listen()`. Prohibidas dentro del ciclo de atención de peticiones en producción."
+            },
+            {
+              "id": "nodejs-core-q145",
+              "number": 145,
+              "title": "¿Cómo leer y escribir archivos grandes de forma segura utilizando `fs.createReadStream()` y `fs.createWriteStream()` en lugar de `fs.readFile()`?",
+              "seniority": "Mid-Level",
+              "redFlag": "Intentar procesar un log masivo de 5 GB con `fs.readFile()` y no entender por qué el proceso muere con error de heap.",
+              "greenFlag": "Explicar la mecánica de procesamiento en streaming por trozos (*chunks*) y el tamaño por defecto del buffer de lectura (`highWaterMark: 64 KB`).",
+              "answer": "- **El problema de `fs.readFile()`**:\n- Intenta cargar el archivo **completo en la memoria RAM** de una sola vez antes de entregar el buffer al callback.\n- Si se intenta leer un archivo de 2 GB en un contenedor con 1 GB de RAM, la aplicación colapsará inmediatamente por `JavaScript heap out of memory` o por el límite del motor V8.\n- **La solución con Streams (`createReadStream` / `createWriteStream`)**:\n- Procesa los datos de forma continua en pequeños fragmentos (*chunks*, típicamente de 64 KB por defecto):\n  ```javascript\n  import fs from 'node:fs';\n   const readStream = fs.createReadStream('video-enorme.mp4');\n  const writeStream = fs.createWriteStream('copia-video.mp4');\n   readStream.pipe(writeStream);\n   writeStream.on('finish', () => {\n    console.log('Copia completada con consumo plano de memoria');\n  });\n  ```\n- **Consumo de memoria constante**: La memoria RAM utilizada se mantiene constante (en el orden de pocos kilobytes) independientemente de si el archivo pesa 10 MB, 50 GB o 1 TB."
+            },
+            {
+              "id": "nodejs-core-q146",
+              "number": 146,
+              "title": "¿Qué hace el método `.pipe()` entre dos Streams y cómo previene que la memoria se agote al transferir archivos al cliente HTTP?",
+              "seniority": "Mid-Level",
+              "redFlag": "Cargar un archivo en un buffer con `fs.readFile` para enviarlo con `res.end(buffer)` en un endpoint de descarga de archivos.",
+              "greenFlag": "Explicar el fenómeno de **Backpressure** y la sincronización automática entre las velocidades del productor y del consumidor mediante `pipe` o `pipeline`.",
+              "answer": "El método `readable.pipe(writable)` conecta la salida de un Stream de lectura directamente a la entrada de un Stream de escritura:\n```javascript\nimport http from 'node:http';\nimport fs from 'node:fs';\nhttp.createServer((req, res) => {\nconst fileStream = fs.createReadStream('reporte.pdf');\nres.writeHead(200, { 'Content-Type': 'application/pdf' });\nfileStream.pipe(res); // Conecta disco -> socket de red\n}).listen(3000);\n```\n- **Control automático de Backpressure**:\n- Si el disco puede leer a 500 MB/s pero el cliente está conectado en un teléfono móvil con 3G lento recibiendo datos a solo 1 MB/s, el método `.pipe()` **gestiona automáticamente el freno**:\n- Cuando el buffer de red se llena (`res.write()` devuelve `false`), `.pipe()` pausa automáticamente la lectura del disco (`fileStream.pause()`).\n- Cuando el socket drena sus datos por la red y queda espacio libre (evento `'drain'`), `.pipe()` reanuda la lectura (`fileStream.resume()`).\n- Esto evita que los datos sin enviar se acumulen en la memoria RAM del servidor.\n- *Alternativa moderna*: Usar `stream.pipeline` (de `node:stream/promises`), que además maneja automáticamente el cierre seguro y los errores de ambos streams."
+            },
+            {
+              "id": "nodejs-core-q147",
+              "number": 147,
+              "title": "¿Para qué sirve el módulo nativo `node:os` y cómo ayuda a detectar el número de núcleos de CPU y la memoria del sistema?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Asumir siempre que una máquina tiene 4 cores sin consultarlo dinámicamente o usar rutas hardcodeadas tipo `\"C:\\\\temp\"` o `\"/tmp\"` sin usar `os.tmpdir()`.",
+              "greenFlag": "Advertir que dentro de contenedores Docker con límites de CPU asignados (ej. Kubernetes cgroups), `os.cpus().length` puede devolver los cores físicos del host en vez de los asignados al contenedor si no se usa Node.js actualizado.",
+              "answer": "El módulo nativo `node:os` proporciona métodos utilitarios para inspeccionar el hardware y el sistema operativo anfitrión donde corre el proceso:\n- **Métodos más utilizados**:\n- **`os.cpus()`**: Devuelve un array de objetos con información de cada núcleo lógico de CPU (modelo, velocidad en MHz y tiempos de uso). La longitud del array (`os.cpus().length`) es el estándar habitual para determinar cuántos procesos trabajadores instanciar en una arquitectura con el módulo `node:cluster`.\n- **`os.totalmem()` y `os.freemem()`**: Devuelven la memoria RAM total y disponible del sistema en bytes. Esencial para scripts de telemetría y healthchecks.\n- **`os.platform()` y `os.arch()`**: Identifican el sistema operativo (`'linux'`, `'darwin'`, `'win32'`) y la arquitectura de la CPU (`'x64'`, `'arm64'`).\n- **`os.homedir()` y `os.tmpdir()`**: Devuelven la ruta absoluta al directorio del usuario actual y a la carpeta temporal del sistema de forma agnóstica a la plataforma."
+            },
+            {
+              "id": "nodejs-core-q148",
+              "number": 148,
+              "title": "¿Qué utilidades proporciona el módulo `node:util`, en particular `util.format()`, `util.inspect()` y `util.types`?",
+              "seniority": "Mid-Level",
+              "redFlag": "Intentar inspeccionar objetos anidados complejos serializándolos con `JSON.stringify(obj)`, lo que provoca caídas si el objeto contiene referencias circulares (*TypeError: Converting circular structure to JSON*).",
+              "greenFlag": "Utilizar `util.inspect(obj, { depth: null })` para depurar objetos con estructuras circulares o llamadas recursivas complejas con total seguridad.",
+              "answer": "El módulo `node:util` está diseñado para dar soporte a las necesidades internas de las APIs de Node.js y a los desarrolladores:\n- **`util.format(format, [...args])`**:\n- Produce cadenas formateadas utilizando marcadores de posición similares a `printf` de C: `%s` (string), `%d` (número), `%j` (JSON), `%o` (objeto detallado). Es el motor que utiliza internamente `console.log`.\n- **`util.inspect(object, [options])`**:\n- Devuelve una representación visual en string de un objeto, diseñada para depuración. Permite controlar la profundidad de recursión (`depth`), mostrar propiedades no enumerables (`showHidden`) y aplicar colores ANSI (`colors: true`). Es crucial para inspeccionar objetos anidados profundamente que `console.log` colapsa como `[Object]`.\n- **`util.types`**:\n- Ofrece comprobaciones de tipo de bajo nivel ultra fiables que el operador `typeof` de JavaScript no puede discernir con precisión:\n  ```javascript\n  import { types } from 'node:util';\n   types.isDate(new Date());        // true\n  types.isPromise(miObjeto);       // true si es una Promesa nativa\n  types.isRegExp(/abc/);           // true\n  types.isAnyArrayBuffer(buffer);  // true\n  ```"
+            },
+            {
+              "id": "nodejs-core-q149",
+              "number": 149,
+              "title": "¿Cómo ejecutar comandos del sistema o scripts secundarios de forma básica usando `child_process.exec()` vs `child_process.spawn()`?",
+              "seniority": "Mid-Level",
+              "redFlag": "Usar `exec` para comandos de salida masiva o concatenar parámetros no saneados de la web en el string del comando (`exec(`ping ${ip}`)`), abriendo una vulnerabilidad crítica de inyección de shell.",
+              "greenFlag": "Recomendar siempre `spawn` pasando los argumentos como un array estructurado por motivos de seguridad y eficiencia de memoria streaming.",
+              "answer": "Ambas funciones del módulo nativo `node:child_process` permiten lanzar procesos en el sistema operativo, pero con diferencias críticas de consumo de memoria y ejecución:\n- **`child_process.exec(command, [options], callback)`**:\n- **Crea una shell del sistema operativo** (ej. `/bin/sh` o `cmd.exe`) y evalúa el comando completo como un string.\n- **Almacena toda la salida en un buffer en memoria**: Espera a que el proceso termine por completo y entrega todo `stdout` y `stderr` al callback.\n- *Límite*: Tiene un límite de buffer por defecto (habitualmente 1 MB). Si el comando genera más datos, el proceso hijo falla con `maxBuffer exceeded`.\n- *Riesgo*: Altamente vulnerable a inyecciones de comandos si se concatenan entradas del usuario.\n- **`child_process.spawn(command, [args], [options])`**:\n- **No lanza una shell por defecto**: Ejecuta el binario ejecutable directamente, pasando los argumentos como un array separado, evitando riesgos de inyección de comandos.\n- **Flujo en Streaming**: Devuelve una instancia de `ChildProcess` donde `stdout` y `stderr` son Readable Streams. Los datos se pueden consumir a medida que se generan, sin límite de tamaño de buffer.\n- Ideal para tareas de larga duración o comandos que generan grandes volúmenes de datos."
+            },
+            {
+              "id": "nodejs-core-q150",
+              "number": 150,
+              "title": "¿Cómo depurar una aplicación Node.js usando la bandera `--inspect` y conectando Chrome DevTools o el depurador de VS Code?",
+              "seniority": "Junior / Mid-Level",
+              "redFlag": "Conocer únicamente `console.log` para depurar y no saber cómo colocar un breakpoint o usar `--inspect` ante un problema complejo de producción.",
+              "greenFlag": "Demostrar destreza utilizando breakpoints condicionales, breakpoints de excepciones no capturadas (*Pause on exceptions*) e inspección del heap en Chrome DevTools sobre un proceso Node.js en vivo.",
+              "answer": "En lugar de limitarse a usar `console.log`, Node.js incorpora de forma nativa el protocolo **Chrome DevTools Protocol (V8 Inspector)**:\n- **Uso de banderas**:\n- **`node --inspect app.js`**: Inicia la aplicación y expone un servidor de depuración WebSocket en `127.0.0.1:9229`.\n- **`node --inspect-brk app.js`**: Pausa inmediatamente la ejecución del código en la **primera línea** del script, esperando a que se conecte un cliente depurador antes de continuar. Esencial para depurar la fase de arranque o inicialización.\n- **Conexión de herramientas**:\n1. **Google Chrome / Chromium**:\n   - Abrir `chrome://inspect` en el navegador.\n   - La instancia de Node.js aparecerá en la sección \"Remote Target\". Al hacer click en \"inspect\", se abre la interfaz completa de DevTools con soporte para breakpoints condicionales, inspección del Call Stack, evaluación de variables en tiempo real en la consola y profiling de memoria/CPU.\n2. **Visual Studio Code**:\n   - Dispone de integración automática: presionando `F5` o mediante una configuración `launch.json` de tipo `\"node\"`, se conecta directamente al proceso de Node.js con depuración interactiva en el propio editor de código."
             }
           ]
         }

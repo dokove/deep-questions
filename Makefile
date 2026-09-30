@@ -6,7 +6,7 @@ help:
 	@echo "================================================================="
 	@echo " make status        - Muestra el estado de Git en los 9 módulos de la suite"
 	@echo " make test-all      - Ejecuta los 9 laboratorios senior de la suite"
-	@echo " make build-viewer  - Compila las 1,100 preguntas desde los repositorios a JSON y JS"
+	@echo " make build-viewer  - Compila las 1,150 preguntas desde los repositorios a JSON y JS"
 	@echo " make viewer        - Abre el visualizador web interactivo"
 	@echo " make update        - Actualiza todos los submódulos desde GitHub"
 	@echo "================================================================="

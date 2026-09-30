@@ -1,10 +1,10 @@
 # 🏛️ The Mastery Suite: Hub Maestro de Preguntas de Entrevistas Técnicas
 
-> **Total: 1,100 Preguntas Técnicas de Nivel Profesional** divididas en 11 guías de especialidad (100 preguntas cada una) a través de los 9 repositorios de la suite, diseñadas para roles de **Mid-Level, Senior Software Engineer, Tech Lead, Staff Engineer, Principal Architect y Engineering Manager**.
+> **Total: 1,150 Preguntas Técnicas de Nivel Profesional** divididas en 11 guías de especialidad a través de los 9 repositorios de la suite, diseñadas para roles de **Junior, Mid-Level, Senior Software Engineer, Tech Lead, Staff Engineer, Principal Architect y Engineering Manager**.
 
 ---
 
-## 🧭 Estructura del Ecosistema de Preguntas (1,100 Preguntas)
+## 🧭 Estructura del Ecosistema de Preguntas (1,150 Preguntas)
 
 Cada módulo de **The Mastery Suite** actúa como la única fuente de verdad (*Single Source of Truth*) para sus preguntas técnicas, organizadas en secciones temáticas canónicas con código de producción y criterios rigurosos de evaluación:
 
@@ -13,7 +13,7 @@ the-mastery-suite/
 ├── INTERVIEW-QUESTIONS.md                                <--- [ESTE HUB MAESTRO GLOBAL]
 │
 ├── nodejs-ecosystem-mastery/
-│   ├── INTERVIEW-QUESTIONS-NODEJS.md                     <--- 100 Q: Node.js Core, V8, Libuv & Concurrencia
+│   ├── INTERVIEW-QUESTIONS-NODEJS.md                     <--- 150 Q: Node.js Core, Fundamentos, V8, Libuv & Concurrencia
 │   ├── INTERVIEW-QUESTIONS-EXPRESS.md                    <--- 100 Q: Express.js, Middlewares & Seguridad
 │   └── INTERVIEW-QUESTIONS-NESTJS.md                     <--- 100 Q: NestJS Enterprise, IoC, CQRS & Microservicios
 │
@@ -64,7 +64,7 @@ the-mastery-suite/
 
 ## 🖥️ Visualizador Web Interactivo de Entrevistas
 
-Para una experiencia de estudio gamificada y dinámica, la suite incluye una aplicación web interactiva que procesa las 1,100 preguntas:
+Para una experiencia de estudio gamificada y dinámica, la suite incluye una aplicación web interactiva que procesa las 1,150 preguntas:
 
 ```bash
 # 1. Compilar los datos de preguntas desde las carpetas *-mastery:

@@ -43,9 +43,9 @@ graph TD
 
 ---
 
-## 🖥️ Visualizador Web Interactivo de Entrevistas (1,100 Preguntas)
+## 🖥️ Visualizador Web Interactivo de Entrevistas (1,150 Preguntas)
 
-La suite incluye una aplicación web de alta gama para explorar, filtrar por nivel de seniority (`Junior`, `Mid-Level`, `Senior`, `Staff`), buscar y estudiar en tiempo real las **1,100 preguntas técnicas organizadas por sección**:
+La suite incluye una aplicación web de alta gama para explorar, filtrar por nivel de seniority (`Junior`, `Mid-Level`, `Senior`, `Staff`), buscar y estudiar en tiempo real las **1,150 preguntas técnicas organizadas por sección**:
 
 ```bash
 # Lanzar el visualizador interactivo localmente:
@@ -116,7 +116,7 @@ make status
 # 2. Ejecutar la suite completa de los 9 laboratorios senior:
 make test-all
 
-# 3. Compilar las 1,100 preguntas desde los repositorios hacia el visualizador:
+# 3. Compilar las 1,150 preguntas desde los repositorios hacia el visualizador:
 make build-viewer
 # o con npm:
 npm run build:questions
