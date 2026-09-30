@@ -22,3 +22,6 @@
 [submodule "agile-mastery"]
 	path = agile-mastery
 	url = https://github.com/zulquer/agile-mastery.git
+[submodule "typescript-mastery"]
+	path = typescript-mastery
+	url = https://github.com/zulquer/typescript-mastery.git

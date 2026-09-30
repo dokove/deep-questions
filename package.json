@@ -1,0 +1,14 @@
+{
+  "name": "the-mastery-suite",
+  "version": "2.0.0",
+  "description": "Centro de mando y suite modular de ingeniería de software avanzada",
+  "type": "module",
+  "scripts": {
+    "build:questions": "node _scripts/build-questions-data.js",
+    "viewer": "open viewer/index.html",
+    "test:all": "make test-all",
+    "status": "make status"
+  },
+  "author": "zulquer",
+  "license": "MIT"
+}
