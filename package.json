@@ -1,14 +1,46 @@
 {
-  "name": "the-mastery-suite",
-  "version": "2.0.0",
-  "description": "Centro de mando y suite modular de ingeniería de software avanzada",
+  "name": "@dokove/questions-bank",
+  "version": "3.1.0",
+  "description": "Banco técnico de preguntas de entrevista y exámenes técnicos de ingeniería con taxonomías y estructura ultra-plana.",
   "type": "module",
-  "scripts": {
-    "build:questions": "node _scripts/build-questions-data.js",
-    "viewer": "open _viewer/index.html",
-    "test:all": "make test-all",
-    "status": "make status"
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./questions-data.json": "./dist/questions-data.json"
   },
-  "author": "zulquer",
-  "license": "MIT"
+  "files": [
+    "dist",
+    "questions",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "npm run build && vite",
+    "build": "node scripts/build-questions-data.mjs",
+    "validate:taxonomies": "node scripts/validate-taxonomies.mjs",
+    "validate": "npm run validate:taxonomies",
+    "test": "npm run build && npm run validate:taxonomies",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
+  },
+  "dependencies": {
+    "@dokove/taxonomies": "file:../pub.taxonomies"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@dokove/flexible-content": "file:../dokove.ui/packages/flexible-content",
+    "@vitejs/plugin-react": "^6.1.1",
+    "dokove-icons": "file:../dokove.ui/packages/icons",
+    "dokove-questions": "file:../dokove.ui/packages/questions",
+    "dokove-ui": "file:../dokove.ui/packages/ui",
+    "gray-matter": "^4.0.3",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-select": "^5.10.2",
+    "vite": "^8.3.2"
+  }
 }

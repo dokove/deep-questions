@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🛡️  [pre-commit hook] Ejecutando validación integral de @dokove/questions-bank..."
+
+npm test
+
+echo "✅ [pre-commit hook] Validación superada con éxito. Procediendo con el commit."
